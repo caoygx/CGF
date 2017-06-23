@@ -25,9 +25,9 @@ class CommonController extends Controller {
                 //检测表存在，则实例化
                 $model = M();
                 $tablename = strtolower(C('DB_PREFIX').parse_name(CONTROLLER_NAME));
-               
-                $sqlCheckTable = "SELECT * FROM information_schema.tables WHERE table_name = '$tablename'"; 
-              
+
+                $sqlCheckTable = "SELECT * FROM information_schema.tables WHERE table_name = '$tablename'";
+
                 $tableExist = $model->query($sqlCheckTable);
                 debug($tableExist);
                 if($this->autoInstantiateModel && !empty($tableExist)){
@@ -56,71 +56,6 @@ class CommonController extends Controller {
 
 
     function _initialize() {
-        //if(!IS_CLI)	$this->requestLog();
-
-        return;
-        //url带openid 自动写cookie,session等登录标识
-        $open_id = I('open_id');
-        if($open_id){
-            $r =  M('User')->where(["open_id" => $open_id,"type" => I('type')])->find();
-            if(!empty($r)){
-                $r['uid'] = $r['id'];
-                $this->tempStorageOpenidUser = $r;
-                setUserAuth($r); //登录前在getAuth 里增加个标识，如果get open_id有值，不必取cookie,直接标识为登录
-            }
-        }
-
-        $this->getAuth();
-        //exit('x');exit;
-        //用户信息
-        if(!empty($this->uid)){
-            $m = M('User');
-            $r = $m->find($this->uid);
-            //var_dump($r);
-            //echo $m->getLastSql();
-            //exit;
-            if(empty($r['nickname']) && !empty($r['username'])) $r['nickname'] = $r['username'];
-            $this->assign ( 'user', $r );
-        }
-        /*
-                if(C('USER_AUTH_ON')){
-                    import ( '@.ORG.Util.RBAC_WEB' );
-                    $app = 'USER';
-
-                }else{
-                    import ( 'ORG.Util.RBAC' );
-                    $app = APP_NAME;
-                }*/
-    }
-
-
-    public function index() {
-
-        //自动获取通用模板时 获取表字段
-        $fieldsKey = 'tpl_fields.'.strtolower(CONTROLLER_NAME);
-        $tpl_fields = C($fieldsKey);
-        if(!empty($tpl_fields)){
-            foreach ($tpl_fields as $k => $v){
-                //var_dump($k,$v);
-                $this->assign($k,$v);
-            }
-        }
-//        var_dump($tpl_fields);exit;
-
-
-        //列表过滤器，生成查询Map对象
-        $map = $this->_search ();
-        if (method_exists ( $this, '_filter' )) {
-            $this->_filter ( $map );
-        }
-
-
-        $name=CONTROLLER_NAME;
-        //$model = D ($name);
-        if (! empty ( $this->m )) {
-            $this->_list ( $this->m, $map,$this->sortBy );
-        }
-        $this->toview ();
         return;
     }
 
@@ -132,90 +67,7 @@ class CommonController extends Controller {
         }
     }
 
-    //获取用户登录凭证信息
-    function getAuth(){
-        $u = getUserAuth();
-        if(CONF_ENV=='dev'){
-            //$u['uid'] = 4;
-        }
-        if(empty($u) && !empty($this->tempStorageOpenidUser)) $u = $this->tempStorageOpenidUser;
-        $this->user = $u;
-        $this->uid = $this->user['uid'];
-        return $u;
-    }
 
-
-    public $logId;
-    /**
-     * 访问日志，记录用户请求的参数
-     */
-    function requestLog(){
-
-
-        $data = array();
-        $data['url'] = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        if(IS_POST){
-            $params = $_POST;
-        }elseif(IS_GET){
-            $params = $_GET;
-        }
-        if(empty($params)) $params['input'] = file_get_contents("php://input");
-        $data['params'] = json_encode($params);
-        //$data['cookie'] = json_encode($_COOKIE);
-        //$data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-        $data['ip'] = get_client_ip();
-        $detail = array();
-        $detail['request'] = $_REQUEST;
-
-        $header = [];
-        $fields = ['HTTP_USER_ID','HTTP_DEVICE_VID','HTTP_DEVICE_ID','HTTP_PLATFORM','HTTP_VERSION']; //'HTTP_USER_AGENT',
-        foreach ($fields as $k => $v){
-            if(empty($_SERVER[$v])) continue;
-            $header[$v] = $_SERVER[$v];
-        }
-        /*$this->version = I('server.HTTP_VERSION');
-        $this->device_id = I('device_id') ?:I('server.HTTP_DEVICE_ID');
-        $this->platform = I('server.HTTP_PLATFORM');
-        $user_id = I('user_id') ?: I('server.HTTP_USER_ID');
-        $detail['server'] = $_SERVER;*/
-        //$detail['header'] = $header;
-        //$data['detail'] = json_encode($detail);
-        $url = $_SERVER['REQUEST_METHOD']." ".$_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']." ".$_SERVER['SERVER_PROTOCOL']."\r\n";
-        $request = $url.getallheaders(true);
-
-        $raw_post = '';
-        if(IS_POST){
-            $raw_post = http_build_query($_POST);
-            if(empty($raw_post)){
-                $raw_post = file_get_contents("php://input");
-            }
-        }
-        $request .= "\r\n".$raw_post;
-
-        $data['detail'] = $request;
-        $data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-        $data['platform'] = I('server.HTTP_PLATFORM');
-        $data['user_id'] = I('server.HTTP_USER_ID');
-        $data['create_time'] = date("Y-m-d H:i:s");
-        $data['method'] = $_SERVER['REQUEST_METHOD'];
-        $data['date_int'] = time();
-        //$m = M('LogRequest');
-        $m = D('RequestLog');
-        //$m->create($data);
-        $this->logId = $m->add($data);
-        //echo $m->getLastSql();exit;
-
-    }
-
-    function responseLog($id,$response){
-        $data = [];
-        $data['id'] = $id;
-        $data['response'] = $response;
-        //$m = M('LogRequest');
-        $m = D('RequestLog');
-        $m->save($data);
-
-    }
 
     public function lists() {
 
@@ -828,10 +680,6 @@ class CommonController extends Controller {
         $this->toview();
     }
 
-    function read() {
-        $this->edit ();
-    }
-
     function edit() {
 
         $id = $_REQUEST [$this->m->getPk ()];
@@ -846,6 +694,7 @@ class CommonController extends Controller {
         //自动获取添加模板
         layout(false);
         $tableInfo = new TableInfo('edit');
+        $tableInfo->data = $vo;
         $tableName = $this->m->getTableName();
         $form = $tableInfo->generateForm($tableName);
         $this->form = $form;
@@ -853,38 +702,8 @@ class CommonController extends Controller {
         $this->toview("","add");
     }
 
-    function edit2() {
-        $id = $_REQUEST [$this->m->getPk ()];
-        $vo = $this->m->getById ( $id );
-        if (method_exists ( $this, '_replacePublic' )) {
-            $this->_replacePublic ( $vo );
-        }
-        //var_dump($vo);
-        //exit('x');
-        $this->success($vo);
 
-        //$this->assign ( 'vo', $vo );
-        //$this->display ('add');
-    }
 
-    function update() {
-        //B('FilterString');
-        $name=CONTROLLER_NAME;
-        //$model = D ( $name );
-        if (false === $this->m->create ()) {
-            $this->error ( $this->m->getError () );
-        }
-        // 更新数据
-        $list=$this->m->save ();
-        if (false !== $list) {
-            //成功提示
-            $this->assign ( 'jumpUrl', Cookie::get ( '_currentUrl_' ) );
-            $this->success ('编辑成功!');
-        } else {
-            //错误提示
-            $this->error ('编辑失败!');
-        }
-    }
     /**
     +----------------------------------------------------------
      * 默认删除操作
