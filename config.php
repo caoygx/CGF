@@ -20,6 +20,7 @@ $pub =  array(
     'SHOW_PAGE_TRACE' => true,
     'TAGLIB_PRE_LOAD' => 'html', //,OT\\TagLib\\Think
     'URL_MODEL'=>2, //默认1;URL模式：0 普通模式 1 PATHINFO 2 REWRITE 3 兼容模式
+    'MODULE_ALLOW_LIST' => array('Home'),
 	//'LOG_RECORD'=>true, 
 
     'options' => array(

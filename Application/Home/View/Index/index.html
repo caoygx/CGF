@@ -2,35 +2,32 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>工具包</title>
+<title>数据表管理</title>
 <script src="http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
 <base target="_blank" />
 </head>
 
 <body>
-<div class="row">
-<div class="col-md-4"></div>
-  <div class="col-md-4"><h1>功能列表</h1></div>
-  <div class="col-md-4"></div>
+<div class="container">
+<h1 class="text-center">表列表</h1>
 </div>
 
+<div class="container">
 <table class="table table-striped">
+<?php
+ $dbName = C('DB_NAME');
+
+ $result = M()->query("select table_name,table_comment from information_schema.tables where table_schema='".$dbName."' and table_type='base table'")
+?>
+
+    <volist id="vo" name="result">
     <tr>
-        <td><a href="{:U('/home/project/index')}">api接口文档</a></td>
+        <td><a href="/home/{:parse_name($vo['table_name'],1)}/lists">  <?= $vo['table_comment'] ? $vo['table_comment'] : $vo['table_name'] ?>管理</a></td>
     </tr>
-    <tr>
-        <td><a href="{:U('/home/user/lists')}">根据表注释自动CURD</a></td>
-    </tr>
-   <!-- <tr>
-        <td><a href="{:U('/home/test/index?environment=test')}">api 接口测试</a></td>
-    </tr>-->
-    
-     <tr>
-        <td><a href="{:U('/home/form/index')}">表单生成工具</a></td>
-    </tr>
+    </volist>
     
 </table>
-
+</div>
 </body>
 </html>
