@@ -1,9 +1,12 @@
 
-# CGF Comment Generate Form
+# CGF Comment Generate Form (不用写一行代码，实现增删改查)
+
+这是一种表字段注释的格式，一种思想，不限于任何编程语言，只要各语言实现了这种方式，就能自动实现CURD。  
 
 根据表字段注释，自动实现添加,修改，列表，搜索基本功能。    
-只要定义好字段的注释，不用写一行代码就能实现增删改查。大大提高开发效率，让你真正飞起来！  
-这是一种表字段注释的格式，一种思想，不限于任何编程语言，只要各语言实现了这种方式，就能自动实现CURD。大家可以一起来完善这种格式，让其变成一种标准或协议。
+只要定义好字段的注释，就能实现增删改查。大大提高开发效率，让你真正飞起来！   
+
+希望大家可以一起来完善这种格式，让其变成一种标准或协议。  
 
 
 # demo 样例(基于thinkphp实现的)  
@@ -66,6 +69,27 @@ html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的�
 #### [ 15 ] 为1111的10进制，等同于1111  
 #### [ reqiure:必须填写 ] 表示必填，错误提示为：必须填写  
 #### [ 0:禁用,1:正常,2:审核中 ]   表示状态这个select控件有3个选项，0,1,2表示key  
+
+
+# 表定义的参考格式
+```sql
+
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标题-hidden|0111',
+  `username` varchar(255) NOT NULL DEFAULT '' COMMENT '用户名--用户名为字符|1111|require:用户名必须填写-unique-<</\\w{3,6}/i>>:用户名不合法',
+  `password` varchar(255) DEFAULT '' COMMENT '密码-password|1110|require:密码必须填写',
+  `email` varchar(255) DEFAULT NULL COMMENT '邮箱|1111|require:邮箱必须填写-email:邮箱格式不正确',
+  `birthday` date DEFAULT NULL COMMENT '生日|1111|require:密码必须填写',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态-select-禁用则不显示|1111|require|0:禁用,1:正常,2:审核中',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间|0010',
+  `flag` varchar(255) NOT NULL DEFAULT '' COMMENT '标记-select|1100|require|0:推荐,1:置顶,2:广告',
+  `intro` text COMMENT '用户介绍-editor|1100',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
+
+
+
+```
 
 
 
