@@ -676,7 +676,8 @@ function foreverdel(id) {
 
     if (window.confirm('确实要永久删除选择项吗？'))
     {
-        ThinkAjax.send(URL + "/foreverdelete/", "id=" + keyValue + '&ajax=1', doDelete);
+        //ThinkAjax.send(URL + "/foreverdelete/", "id=" + keyValue + '&ajax=1', doDelete);
+        ThinkAjax.send(URL + "/foreverdelete/", "id=" + keyValue , doDelete);
 
     }
 
@@ -688,8 +689,11 @@ function getTableRowIndex(obj) {
 }
 
 function doDelete(data, status) {
-    if (data.status == 1)
+    if (data.code == 1)
     {
+        alert('删除成功');
+        window.location.reload();
+        return;
         var Table = G('checkList');
         var len = selectRowIndex.length;
         if (len == 0) {
@@ -704,6 +708,8 @@ function doDelete(data, status) {
         }
         selectRowIndex = Array();
 
+    }else{
+        alert('删除失败');
     }
 
 }

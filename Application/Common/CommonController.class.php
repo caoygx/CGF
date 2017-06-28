@@ -4,7 +4,7 @@ use Think\Controller;
 use Org\Util\Rbac;
 use Org\Util\Cookie;
 use Common\XPage;
-use Org\Util\TableInfo;
+//use Org\Util\TableInfo;
 class CommonController extends Controller {
     /**
      * @var \Model|null|\Think\Model
@@ -136,7 +136,8 @@ class CommonController extends Controller {
     +----------------------------------------------------------
      */
     function getReturnUrl() {
-        return __CONTROLLER__ . '/'  .   C ( 'DEFAULT_ACTION' );
+        //return __CONTROLLER__ . '/'  .   C ( 'DEFAULT_ACTION' );
+        return __CONTROLLER__ . '/'  .  "lists" ;
     }
 
     /**
