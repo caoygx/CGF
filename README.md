@@ -1,5 +1,5 @@
 
-# CGF Comment Generate Form (不用写一行代码，实现增删改查)
+# CGF(Comment Generate Form) 不写一行代码，实现增删改查
 
 这是一种表字段注释的格式，一种思想，不限于任何编程语言，只要各语言实现了这种方式，就能自动实现CURD。  
 
