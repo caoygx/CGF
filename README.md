@@ -12,7 +12,11 @@
 # demo 样例(基于thinkphp实现的)  
 http://cgf.rrbrr.com/
 
+大家可以连上测试数据库，增加些表，试用下。请不要删除原来的表。
 
+数据库地址    qdm112455516.my3w.com  
+数据库账号    qdm112455516  
+数据库密码    cgfrrbrr  
 
 
 # 格式说明  
