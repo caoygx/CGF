@@ -344,9 +344,17 @@ class TableInfo extends Controller
             if (!in_array($this->page, $commentInfo['arrShowPages'])) { //字段不显示，返回空
                 continue;
             }
+         //   var_dump($commentInfo);
             $cnName = empty($commentInfo['name']) ? $columnInfo['COLUMN_NAME'] : $commentInfo['name'];
             $name = $columnInfo['COLUMN_NAME'];
-            $fields[] = "$name:$cnName";
+            if($commentInfo['options']){ //有选项，则在列表页调用函数根据key找到对应的value
+                //var_dump($commentInfo['options']);exit;
+                C($name,$commentInfo['options']);
+                $functionName = "|optionsValue='$name'";//.ucfirst($name);
+            }else{
+                $functionName = '';
+            }
+            $fields[] = "$name{$functionName}:$cnName";
         }
         return implode(',', $fields);
     }
