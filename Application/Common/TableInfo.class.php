@@ -575,9 +575,13 @@ class TableInfo extends Controller
 
 
         $validate = $this->getFieldJsValidateRules($commentInfo);
+        if($columnInfo['COLUMN_KEY'] == "PRI" && $this->page == 'edit'){
+            $inputAttribute['type'] = "hidden";
+        }
 
         $this->hidden = 0; //不是隐藏元素
-        if (!empty($commentInfo['htmlType'])) {
+
+        if (!empty($commentInfo['htmlType'])) { //字段指定了类型
             $commentInfo['htmlType'] = strtolower($commentInfo['htmlType']);
 
             if($commentInfo['htmlType'] == 'password'){
@@ -604,7 +608,6 @@ class TableInfo extends Controller
 
             }elseif($commentInfo['htmlType'] == 'editor'){
                 $inputStr .= "<html:editor id=\"editor\" name=\"$name\" type=\"kindeditor\" style=\"width:680px;height:300px;visibility:hidden;\" ></html:editor>"; //{$vo.remark}
-
             }
 
 
@@ -645,11 +648,14 @@ class TableInfo extends Controller
             }
 
 
-        } else {
+        } else { //没有指定类型，取默认分析出的类型
             if ($inputAttribute['type'] == "text") {
                 $inputStr .= "<input {$validate} class=\"form-control\" name=\"$name\" type=\"text\" id=\"$name\" size=\"{$inputAttribute['size']}\" value=" . '"{$vo[' . $name . '] ? $vo[' . $name . '] : $_GET[' . $name . ']}"' . " />";
                 //$inputStr .= "<input class=\"form-control\" name=\"$name\" type=\"text\" id=\"$name\" size=\"{$inputAttribute['size']}\" value=" . '"{$vo[$name]}"' . " />";
-            } elseif ($inputAttribute['type'] == "textare") {
+            }elseif ($inputAttribute['type'] == 'hidden'){
+                $inputStr .= "<input  type=\"hidden\"  class=\"form-control\" name=\"$name\" id=\"$name\" size=\"{$inputAttribute['size']}\" value=" . '"{$vo.' . $name . '}"' . " />";
+                $this->hidden = 1;
+            }elseif ($inputAttribute['type'] == "textare") {
                 $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\"></textarea>";
             } elseif ( in_array($inputAttribute['type'],['date','time']) ){
                 $inputStr .= '<div class="input-group date" id="datetimepicker1">
