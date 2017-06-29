@@ -34,13 +34,13 @@ http://cgf.rrbrr.com/
 以 |-，之类的做分隔  
 注释标题 - htm控件类型 - 提示 |展现页面 | 校验类型 |  选项  
 
-## 第一部分
+## 第一部分 描述字段lable、控件类型、提示信息
 注释标题: 一般是字段的中文标题，form表单的label  
 html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的控件需要你自己来实现。  
 提示:一般是此字段的填写规范，如：允许字母或数字  
 
 
-## 第二部分
+## 第二部分 描述在哪些页面显示
 展现页面:用位表示   
 1       1          1       1  
 添加  修改    列表   搜索项  
@@ -55,12 +55,12 @@ html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的�
 添加，修改不显示，列表显示，一般像创建时间就是这样  0010 = 1  
 
 
-## 第三部分
+## 第三部分 描述前后台校验方式
 校验类型:reqiure,email,username,mobile等,用于后台校验,对应thinkphp的校验格式  ，
 也支持前台验证，目前使用validform验证格式，也可使用正则表达式。
 
 
-## 第四部分
+## 第四部分   描述选项的key和value
 选项： 选项1:选项1值，选项2：缺项2值  
    
 
