@@ -8,6 +8,16 @@
 
 希望大家可以一起来完善这种格式，让其变成一种标准或协议。  
 
+# 安装 install
+由于demo是基于thinkphp的，所以要下载thinkphp框架,并且将这两个目录是平级的。  
+
+1. 创建目录 demo,然后进入demo目录  (linux下命令：mkdir demo   cd demo)
+2. git clone https://github.com/caoygx/ThinkPHP.git
+3. git clone https://github.com/caoygx/CGF.git
+4. 创建表结构，并更改CGF/config.php的数据库配置
+5. 浏览器打开 http://localhost/CGF/
+
+
 
 # demo 样例(基于thinkphp实现的)  
 http://cgf.rrbrr.com/
