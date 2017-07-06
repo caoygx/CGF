@@ -442,8 +442,12 @@ class TableInfo extends Controller
         $arr = explode("|", $comment);
         $arr = array_map('trim', $arr);
         //array_walk($arr,function (&$v){ $v = trim($v); });
-        $c = count($arr);
+        $c = count($arr); //parseVarFunction
         switch (true) {
+            //状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中 | implode=",",###
+            case ($c >= 5):
+                $auto = $arr[4];
+
             //状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中
             case ($c >= 4):
                 $options = $arr[3];
@@ -535,8 +539,7 @@ class TableInfo extends Controller
 
         }
 
-
-        $ret = compact('name', 'htmlType', 'tips', 'showPage', 'arrShowPages', 'checkType','arrRules', 'options');
+        $ret = compact('name', 'htmlType', 'tips', 'showPage', 'arrShowPages', 'checkType','arrRules', 'options','auto');
         return $ret;
     }
 
@@ -642,9 +645,18 @@ class TableInfo extends Controller
 
                 } elseif ($commentInfo['htmlType'] == "radio") {
 
-                    foreach ($commentInfo['options'] as $value => $text) {
-                        $inputStr .= "<input {$validate}  name=\"select\" id=\"select\" type=\"radio\"  value=\"$value\">{$text} |";
+                    $first =  "";
+                    if($this->page == 'search'){
+                        $first = 'first="请选择"';
+                        $this->assign("{$name}_selected", I($name));
                     }
+
+                    if($this->page == 'edit'){
+                        $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
+                    }
+                    //$inputStr .= "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
+                    $inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
+
 
                 } elseif ($commentInfo['htmlType'] == "checkbox") {
                     foreach ($commentInfo['options'] as $value => $text) {
@@ -767,6 +779,108 @@ class TableInfo extends Controller
             $str .= '<option value="' . $tableInfo[$columnNameKey] . '" >' . $tableInfo[$columnNameKey] . "</option>\r\n";
         }
         echo $str;
+    }
+
+    /**
+     * @param $tableName 获取自动完成规则
+     */
+    function getAutoComplete($tableName){
+        $rules = [];
+        $allFields = self::getTableInfoArray($tableName);
+        $template = new  \Think\Template();
+        $autos = [];
+        foreach ($allFields as $columnInfo) {
+            $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
+            $columnName =  $columnInfo['COLUMN_NAME'];
+            if(empty($commentInfo['auto'])) continue;
+
+            //方式一： 需要启用eval来执行，这种方式的优势就是能直接使用php内置函数,有些简单的操作就不用加自定义function
+            $auto = $commentInfo['auto'];
+            $name = "$$columnName";
+            $r = $template->parseVarFunction($name,[$auto]);
+            //var_dump($r);  输出 string(16) "implode(",",$id)"
+            // 这样就需要启用eval,然后eval函数执行代码，不像解析模板那些，直接输出到.php文件中，然后运行时自然就能执行了。
+
+
+            //方式二: 自己修改下解析，将函数在此时就运行，得到结果返回
+            $paramValue = I($columnName);
+            //$paramValue = [1,2,3];
+            $result = $this->parseAutoFunction($paramValue,$auto);
+            //修改 post,get值
+            $autos[$columnName] = $_POST[$columnName] = $_GET[$columnName] = $result;
+
+            //方式三: 这个写法比较简单，|函数名，但需要自己增加自定义函数，且只能传1个默认参数，就是当前字段页面上传过来的值
+                /*if($v['type'] == 'unique'){
+                    $rules[] = array($columnName,'',$commentInfo['name'].'名称已经存在！',0,'unique',1);
+                }*/
+
+        }
+        return $autos;
+    }
+
+    /**
+     * 解析自动完成函数
+     * 格式 |function=arg1,arg2
+     * @access public
+     * @param string $paramValue 变量名
+     * @param array $autoFunction  函数列表
+     * @return string
+     */
+    public function parseAutoFunction($paramValue, $autoFunction)
+    {
+        //取得模板禁止使用函数列表
+        /*
+        $functionName 值为 implode='\,',###
+         转为  implode='[comma]',###
+         将等号后面的参数转为数组形式
+        $params = array(
+            0 => [comma],
+            1 => ###
+        );
+
+        //找到### ,用$paramValue替换变成
+        $params = array(
+            0 => [comma],
+            1 => $paramValue
+        );
+
+        将$params 转为字符串 $params = "[comma],$paramValue"
+        再将 [comma] 还原为 ,
+        最终执行代码为： implode(',',$paramValue)
+
+        */
+
+        $template_deny_funs = explode(',', C('TMPL_DENY_FUNC_LIST'));
+            $args = explode('=', $autoFunction, 2);
+            //模板函数过滤
+            $fun = trim($args[0]);
+
+            switch ($fun) {
+                case 'default': // 特殊模板函数
+                    $paramValue = '(isset(' . $paramValue . ') && (' . $paramValue . ' !== ""))?(' . $paramValue . '):' . $args[1];
+                    break;
+                default: // 通用模板函数
+                    if (!in_array($fun, $template_deny_funs)) {
+                        if (isset($args[1])) {
+                            if (strstr($args[1], '###')) {
+                                $args[1] = str_replace('\,','[comma]',$args[1]); // 将参数里的\, 转义的逗号先替换为特殊标识
+                                $allParams = explode(',',$args[1]);
+                                $index = array_search('###',$allParams);
+                                $allParams[$index] = $paramValue;
+                                foreach ($allParams as $k => &$v){
+                                    if($k == $index) continue;
+                                    $v = str_replace('[comma]',',',$v);
+                                }
+                                $result = call_user_func_array($fun,$allParams);
+                            } else {
+                                $result = $fun($paramValue,$args[1]);
+                            }
+                        } else if (!empty($args[0])) {
+                            $result = $fun($paramValue);
+                        }
+                    }
+            }
+        return $result;
     }
 
     /**

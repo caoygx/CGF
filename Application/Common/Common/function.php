@@ -1078,3 +1078,14 @@ function debug($data){
     //var_dump($data);
 }
 function getBrowser(){}
+
+
+
+//数组转为分隔符连接的字符串，像个珍珠手链一样
+function arrayToPearlBracelet($arr, $separator=','){
+    return implode($separator,$arr);
+}
+
+function t1($v,$v2){
+    return $v.'----'.$v2;
+}

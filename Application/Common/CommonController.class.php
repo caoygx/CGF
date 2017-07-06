@@ -931,7 +931,11 @@ class CommonController extends Controller {
 
         //自动验证
         $tableInfo = new TableInfo();
-        $rules = $tableInfo->getValidateRules($this->m->getTableName());
+        $tableName = $this->m->getTableName();
+        $rules = $tableInfo->getValidateRules($tableName);
+        $auto = $tableInfo->getAutoComplete($tableName);
+        //var_dump($auto);exit;
+        //$data = $this->m->create();
 
         if(empty($id)){
             unset($_POST['id']);
