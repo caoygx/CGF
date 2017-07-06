@@ -618,7 +618,7 @@ class TableInfo extends Controller
 
 
             }elseif($commentInfo['htmlType'] == 'editor'){
-                $inputStr .= "<html:editor id=\"editor\" name=\"$name\" type=\"kindeditor\" style=\"width:680px;height:300px;visibility:hidden;\" ></html:editor>"; //{$vo.remark}
+                $inputStr .= "<html:editor id=\"editor\" name=\"$name\" type=\"kindeditor\" style=\"width:680px;height:300px;visibility:hidden;\" >" . '{$vo.' . $name . '}' . "</html:editor>"; //
             }
 
 
