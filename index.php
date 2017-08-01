@@ -1,5 +1,7 @@
 <?php
-//ob_start();
+ob_start();
+
+
 define('ENV',"dev"); //上线开关
 if(ENV == "dev")	  define('SUFFIX',"_dev");
 elseif(ENV == "test") define('SUFFIX',"_test");

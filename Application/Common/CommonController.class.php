@@ -695,6 +695,7 @@ class CommonController extends Controller {
         //自动获取添加模板
         layout(false);
         $tableInfo = new TableInfo('edit');
+        $vo['tag'] = explode(',',$vo['tag']);
         $tableInfo->data = $vo;
         $tableName = $this->m->getTableName();
         $form = $tableInfo->generateForm($tableName);

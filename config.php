@@ -11,13 +11,27 @@ if(IS_CLI){
         'DB_NAME' => 'doc',
         'DB_HOST' => "localhost",
         'DB_USER' => "root",
-        'DB_PWD'  => "123456",
+        'DB_PWD'  => "",
         'DB_PREFIX' => '',
         'DB_PARAMS'    =>    array(\PDO::ATTR_CASE => \PDO::CASE_NATURAL),
     ];
 
 $pub =  array(
+    'output_way' => 'chrome',
+    //'FIRE_SHOW_PAGE_TRACE' => true,
+    'CHROME_SHOW_PAGE_TRACE' => true,
     'SHOW_PAGE_TRACE' => true,
+    'TRACE_PAGE_TABS'=>array(
+        'sql'=>'SQL',
+        'file'=>'文件',
+        'error'=>'错误',
+
+        //'base'=>'基本',
+        //'think'=>'流程',
+        //'debug'=>'调试'
+    ),
+
+
     'TAGLIB_PRE_LOAD' => 'html', //,OT\\TagLib\\Think
     'URL_MODEL'=>2, //默认1;URL模式：0 普通模式 1 PATHINFO 2 REWRITE 3 兼容模式
     'MODULE_ALLOW_LIST' => array('Home'),

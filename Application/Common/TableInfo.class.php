@@ -74,9 +74,16 @@ class TableInfo extends Controller
     {
         $dbType = C('DB_TYPE');
         if ($dbType == 'mysql') {
-            return MYSQL_COLUMN_NAME_KEY;
+
+            //'DB_PARAMS'    =>    array(\PDO::ATTR_CASE => \PDO::CASE_NATURAL),
+            if(C('DB_PARAMS')[\PDO::ATTR_CASE] == \PDO::CASE_NATURAL){
+                return 'COLUMN_NAME';
+            }else{
+                return 'column_name';
+            }
+
         } else {
-            return SQLITE_COLUMN_NAME_KEY;
+            return 'name'; //sqlite
         }
     }
 
@@ -619,6 +626,8 @@ class TableInfo extends Controller
 
             }elseif($commentInfo['htmlType'] == 'editor'){
                 $inputStr .= "<html:editor id=\"editor\" name=\"$name\" type=\"kindeditor\" style=\"width:680px;height:300px;visibility:hidden;\" >" . '{$vo.' . $name . '}' . "</html:editor>"; //
+            }elseif ($commentInfo['htmlType'] == "textare") {
+                $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\">" . '{$vo.' . $name . '}' . "</textarea>";
             }
 
 
@@ -654,16 +663,22 @@ class TableInfo extends Controller
                     if($this->page == 'edit'){
                         $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
                     }
-                    //$inputStr .= "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
-                    $inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
+                    //$inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
+                    $inputStr .= "<html:radio radios='opt_{$name}' checked='{$name}_selected'  name='{$name}' />";
 
 
                 } elseif ($commentInfo['htmlType'] == "checkbox") {
-                    foreach ($commentInfo['options'] as $value => $text) {
-                        $inputStr .= "  <input {$validate}  name=\"select\" id=\"select\"  type=\"checkbox\" value=\"$value\">{$text} |";
+                    $first =  "";
+                    if($this->page == 'search'){
+                        $first = 'first="请选择"';
+                        $this->assign("{$name}_selected", I($name));
                     }
 
-                    //$inputStr = "<input name=\"$name\" type=\"text\" id=\"$name\" size=\"{$inputAttribute['size']}\" />";
+                    if($this->page == 'edit'){
+                        $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
+                    }
+                    //$inputStr .= "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
+                    $inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
                 }
             }
 
@@ -676,7 +691,7 @@ class TableInfo extends Controller
                 $inputStr .= "<input  type=\"hidden\"  class=\"form-control\" name=\"$name\" id=\"$name\" size=\"{$inputAttribute['size']}\" value=" . '"{$vo.' . $name . '}"' . " />";
                 $this->hidden = 1;
             }elseif ($inputAttribute['type'] == "textare") {
-                $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\"></textarea>";
+                $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\">" . '{$vo.' . $name . '}' . "</textarea>";
             } elseif ( in_array($inputAttribute['type'],['date','time']) ){
                 $inputStr .= '<div class="input-group date" id="datetimepicker1">
                     <input type="text" id="'.$name.'" name="'.$name.'" class="form-control" value= '. '"{$vo[' . $name . '] ? $vo[' . $name . '] : $_GET[' . $name . ']}"'.' />
