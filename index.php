@@ -1,4 +1,5 @@
 <?php
+ob_start();
 $http_host = $_SERVER['HTTP_HOST'];
 if(filter_var($http_host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false){
     $domain = $http_host;

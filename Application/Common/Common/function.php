@@ -1,7 +1,5 @@
 <?php
-function ri($str){
-	exit(var_dump($str));
-}
+
 function findTestConfByUrl($url){
 	$testConf = C("test");
 	$ret = array();
@@ -1073,11 +1071,6 @@ if (!function_exists('getallheaders')){
         return $headers;
     }
 }
-
-function debug($data){
-    //var_dump($data);
-}
-function getBrowser(){}
 
 
 
