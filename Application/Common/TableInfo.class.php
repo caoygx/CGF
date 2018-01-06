@@ -5,37 +5,58 @@ use Think\Controller;
 class TableInfo extends Controller
 {
 
-    protected $options = []; //存储数组序列化后的字符串格式
-    protected $arrOptions = []; //存储数组格式
+    public $options = []; //存储数组序列化后的字符串格式
+    public $arrOptions = []; //存储数组格式
     public $page = null;
     public $data = null; //记录的值
+    public $moduleName = "";
+    public $dbConf = [];
+    public $model = null;
+    public $dbName = "";
 
     /**
      * TableInfo constructor.
-     * @param $page 要生成的页面 add,edit,lists
+     * @param $page 要生成的页面 add,edit,lists,search,show
      */
-    function __construct($page = '')
+    function __construct($page = '',$dbConf=[])
     {
         parent::__construct();
         $this->page = $page;
+        if(!empty($dbConf)){
+            $this->model = M('','',$dbConf);
+            $this->dbConf = $dbConf;
+            //$this->dbName = $dbConf['DB_NAME'];
+        }else{
+            $this->model = M();
+            $this->dbConf['DB_TYPE'] = C('DB_TYPE');
+            $this->dbConf['DB_HOST'] = C('DB_HOST');
+            $this->dbConf['DB_NAME'] = C('DB_NAME');
+            $this->dbConf['DB_USER'] = C('DB_USER');
+            $this->dbConf['DB_PWD'] = C('DB_PWD');
+            $this->dbConf['DB_PREFIX'] = C('DB_PREFIX');
+            $this->dbConf['DB_CHARSET'] = C('DB_CHARSET');
+
+        }
+
+
+        $this->moduleName = strtolower(MODULE_NAME);
     }
 
 //获取表名列表
-    static function getTableNameList()
+    public function getTableNameList()
     {
-        $dbType = C('DB_TYPE');
-        $Model = M(); // 实例化一个model对象 没有对应任何数据表
+        $dbType = $this->dbConf['DB_TYPE'];
         if (in_array($dbType, array('mysql', 'mysqli'))) {
-            $dbName = C('DB_NAME');
+            $dbName = $this->dbConf['DB_NAME'];
             $result = Array();
-            $tempArray = $Model->query("select table_name from information_schema.tables where table_schema='" . $dbName . "' and table_type='base table'");
+            $tempArray = $this->Model->query("select table_name from information_schema.tables where table_schema='" . $dbName . "' and table_type='base table'");
             foreach ($tempArray as $temp) {
                 $result[] = $temp['table_name'];
             }
             return $result;
         } else { //sqlite
             $result = Array();
-            $tempArray = $Model->query("select * from sqlite_master where type='table' order by name");
+            $tempArray = $this->Model->query("select * from sqlite_master where type='table' order by name");
             foreach ($tempArray as $temp) {
                 $result[] = $temp['name'];
             }
@@ -52,17 +73,19 @@ class TableInfo extends Controller
         return array_diff($allFileList, $ignoreList);
     }
 
-//获取列名列表
-    static function getTableInfoArray($tableName)
+    //获取列名列表
+    public function getTableInfoArray($tableName)
     {
-        $dbType = C('DB_TYPE');
-        $Model = M(); // 实例化一个model对象 没有对应任何数据表
+        $dbType = $this->dbConf['DB_TYPE'];
         if ($dbType == 'mysql') {
-            $dbName = C('DB_NAME');
-            $result = $Model->query("select * from information_schema.columns where table_schema='" . $dbName . "' and table_name='" . '' .  C('DB_PREFIX') .$tableName . "'");
+            $dbName = $this->dbConf['DB_NAME'];
+            $dbPrefix = $this->dbConf['DB_PREFIX'];
+            $sql = "select * from information_schema.columns where table_schema='" . $dbName . "' and table_name='" . '' .  $dbPrefix .$tableName . "'";
+            //echo $sql;exit;
+            $result = $this->model->query($sql);
             return $result;
         } else { //sqlite
-            $result = $Model->query("pragma table_info (" . C('DB_PREFIX') . $tableName . ")");
+            $result = $this->model->query("pragma table_info (" . $dbPrefix . $tableName . ")");
             return $result;
         }
         $this->error('数据库类型不支持');
@@ -70,20 +93,13 @@ class TableInfo extends Controller
 
 
 //根据数据库类型获取列名键
-    static function getColumnNameKey()
+    public function getColumnNameKey()
     {
-        $dbType = C('DB_TYPE');
+        $dbType = $this->dbConf['DB_TYPE'];
         if ($dbType == 'mysql') {
-
-            //'DB_PARAMS'    =>    array(\PDO::ATTR_CASE => \PDO::CASE_NATURAL),
-            if(C('DB_PARAMS')[\PDO::ATTR_CASE] == \PDO::CASE_NATURAL){
-                return 'COLUMN_NAME';
-            }else{
-                return 'column_name';
-            }
-
+            return MYSQL_COLUMN_NAME_KEY;
         } else {
-            return 'name'; //sqlite
+            return SQLITE_COLUMN_NAME_KEY;
         }
     }
 
@@ -129,7 +145,7 @@ class TableInfo extends Controller
 
     public function index()
     {
-        $tableNameList = self::getTableNameList();
+        $tableNameList = $this->getTableNameList();
         //$this->tabText = $tableNameList;
         //$this->tabText = $tableNameList;
         $this->tabText = array_combine($tableNameList, $tableNameList);
@@ -147,7 +163,7 @@ class TableInfo extends Controller
      * @param string $page 生成什么页面
      * @return string|void
      */
-    function generateForm($tableName)
+    function generateForm($tableName,$isCreateFile=false)
     {
         empty($tableName) && $tableName = I('tableName');
         $columnNameKey = strtoupper(self::getColumnNameKey());
@@ -159,7 +175,8 @@ class TableInfo extends Controller
         } else {
             $allFields = self::getTableInfoArray($tableName);
         }
-        $str .= '<form class="form-horizontal" role="form"  method="post" action="__URL__/save/">';
+        $str .= '';
+
         foreach ($allFields as $columnInfo) {
             if (!empty($selectedFields) && !in_array($columnInfo['COLUMN_NAME'], $selectedFields)) continue;
             //if (!I('hasId') && $columnInfo['COLUMN_KEY'] == "PRI") continue;
@@ -167,11 +184,23 @@ class TableInfo extends Controller
             //$str .= '<option value="'.$columnInfo[$columnNameKey].'" >'.$columnInfo[$columnNameKey]."</option>\r\n";
         }
 
+        if($this->haveUpload){
+            $uploadHeader = 'enctype="multipart/form-data"';
+        }
+        $formHeader = '<form class="form-horizontal" role="form"  method="post" action="__URL__/save/" '.$uploadHeader.'>';
+        $str = $formHeader.$str;
+
         $this->allRows = $str;
         $r = $this->fetch("tpl_form");
 //var_dump($r);exit;
+        //var_dump($this->arrOptions);exit('x1');
         foreach ($this->arrOptions as $k => $v) {
             $this->assign('opt_' . $k, $v);
+        }
+
+        $tpl_content = $r;
+        if($isCreateFile){
+            return $tpl_content;
         }
         $r = $this->fetch("", $r);
         return $r;
@@ -193,11 +222,24 @@ class TableInfo extends Controller
     }
 
     /**
-     * 生成列表模板
+     * cgf生成列表模板
      * @param $tableName
      * @return string
      */
     function generateLists($tableName){
+
+        $str = $this->_generateLists($tableName);
+        $r = $this->fetch("", $str); //调用模板解析程序,将模板内容解析为渲染后的html,用于cgf直接显示
+        return $r;
+        //file_put_contents("$path/index.html", $str);
+    }
+
+    /**
+     * 生成列表的tp模板
+     * @param $tableName
+     * @return string
+     */
+    function _generateLists($tableName){
         $fields = $this->createListFields($tableName);
         $this->f_list = $fields;
 
@@ -214,13 +256,13 @@ class TableInfo extends Controller
         //搜索框生成
         $this->page = 'search';
         $htmlSearch = $this->generateSearch($tableName);
-        $this->control = '__CONTROLLER__';
+        $this->control = CONTROLLER_NAME;//
+        //$this->control = '__CONTROLLER__';// 生成模板时用这个
         $this->htmlSearch = $htmlSearch;
+        $this->tableName=$tableName;
 
-        $str = $this->fetch("tpl_list");
-        $r = $this->fetch("", $str);
-        return $r;
-        //file_put_contents("$path/index.html", $str);
+        $str = $this->fetch("tpl_list"); //生成模板内容
+        return $str;
     }
 
     /**
@@ -228,6 +270,7 @@ class TableInfo extends Controller
      */
     function generateSearch($tableName){
         $allFields = self::getTableInfoArray($tableName);
+        $str = '';
         foreach ($allFields as $columnInfo) {
             if (!empty($selectedFields) && !in_array($columnInfo['COLUMN_NAME'], $selectedFields)) continue;
             //if (!I('hasId') && $columnInfo['COLUMN_KEY'] == "PRI") continue;
@@ -239,6 +282,35 @@ class TableInfo extends Controller
         }
         $r = $this->fetch("", $str);
         return $r;
+
+    }
+
+    function generateHomeListFields($tableName){
+        $allFields = self::getTableInfoArray($tableName);
+
+
+        //var_dump($commentInfo['arrShowPages']);exit;
+        /*$r = $this->parseComment("产品快照|0");
+        var_dump($r);exit;*/
+
+        $fields = [];
+        foreach ($allFields as $columnInfo) {
+
+            $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
+
+            //echo($commentInfo['name']);
+            //var_dump($commentInfo['arrShowPages'][$this->moduleName]);
+            if (in_array("list", $commentInfo['arrShowPages'][$this->moduleName])) { //字段不显示，返回空
+                $fields[] = $columnInfo[COLUMN_NAME];
+                //var_dump($commentInfo);exit;
+                //return '';
+            }
+//exit;
+
+        }
+
+        return $fields;
+        var_dump($fields);exit;
 
     }
 
@@ -338,32 +410,146 @@ class TableInfo extends Controller
     }
 
     /**
-     * 创建列表字段
+     * 创建列表显示字段和显示函数
      * @param $tableName 表名
      * @return string 
      */
     function createListFields($tableName)
     {
-        $allFields = self::getTableInfoArray($tableName);
+        $allFields = $this->getTableInfoArray($tableName);
         $fields = [];
         foreach ($allFields as $columnInfo) {
             $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
-            if (!in_array($this->page, $commentInfo['arrShowPages'])) { //字段不显示，返回空
+
+            /*if($columnInfo['COLUMN_NAME'] == 'content'){
+                var_dump($columnInfo['COLUMN_NAME'],$this->page,$commentInfo['arrShowPages']);
+            }*/
+            if ( !in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])
+                || ( MODULE_NAME == 'User'  && $this->page == 'list'  && $columnInfo['COLUMN_NAME'] == 'user_id')
+                    ) { //字段不显示，返回空
                 continue;
             }
          //   var_dump($commentInfo);
             $cnName = empty($commentInfo['name']) ? $columnInfo['COLUMN_NAME'] : $commentInfo['name'];
             $name = $columnInfo['COLUMN_NAME'];
             if($commentInfo['options']){ //有选项，则在列表页调用函数根据key找到对应的value
-                //var_dump($commentInfo['options']);exit;
-                C($name,$commentInfo['options']);
-                $functionName = "|optionsValue='$name'";//.ucfirst($name);
+
+
+                if(substr($commentInfo['rawOption'],0,6) == 'table='){ //显示关联表字段
+                    $arr = explode('=',$commentInfo['rawOption']);
+                    $tableOption = $arr[1];
+                    $functionName = "|tableValue='$tableOption'";
+                }else{
+                    if(substr($commentInfo['rawOption'],0,10) == 'show_func='){// 显示函数结果
+                        $arr = explode('=',$commentInfo['rawOption']);
+                        $funcName = $arr[1];
+                        $functionName = "|$funcName='$name'";
+                    }else{ //显示配置选项的name
+                        //var_dump($commentInfo['options']);exit;
+                        C($name,$commentInfo['options']);
+                        $functionName = "|optionsValue='$name'";//.ucfirst($name);
+                    }
+                }
+
             }else{
                 $functionName = '';
             }
-            $fields[] = "$name{$functionName}:$cnName";
+            //$fields[] = "$name{$functionName}:$cnName"; //带显示函数的
+            $fields[] = "$name:$cnName";
         }
         return implode(',', $fields);
+    }
+
+    /**
+     * 创建列表select 查询字段
+     * @param $tableName 表名
+     * @return string
+     */
+    function createListSelectFields($tableName)
+    {
+        $allFields = self::getTableInfoArray($tableName);
+        $fields = [];
+        //var_dump($allFields);
+        foreach ($allFields as $columnInfo) {
+
+
+            $func = [];
+            $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
+            /*var_dump($columnInfo['COLUMN_NAME']);
+            var_dump($commentInfo);echo "\n\n";
+            var_dump($this->page);
+            var_dump($commentInfo['arrShowPages']);*/
+
+            if ( in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])){
+                $fields[] = $columnInfo['COLUMN_NAME'];
+            }
+
+            $showAttribute = $commentInfo['arrShowPages'][$this->moduleName];
+            if ( !in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])
+                || ( MODULE_NAME == 'User'  && $this->page == 'list'  && $columnInfo['COLUMN_NAME'] == 'user_id')
+            ) { //字段不显示，返回空
+                continue;
+            }
+
+            $cnName = empty($commentInfo['name']) ? $columnInfo['COLUMN_NAME'] : $commentInfo['name'];
+            $name = $columnInfo['COLUMN_NAME'];
+
+        }
+        //var_dump($fields);
+        //exit;
+        return $fields;
+    }
+
+    /**
+     * 创建列表需要调用函数处理的字段集
+     * @param $tableName 表名
+     * @return string
+     */
+    function createListFieldsForVolist($tableName)
+    {
+        $allFields = self::getTableInfoArray($tableName);
+        $fields = [];
+        foreach ($allFields as $columnInfo) {
+            $func = [];
+            $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
+
+            if ( !in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])
+                || ( MODULE_NAME == 'User'  && $this->page == 'list'  && $columnInfo['COLUMN_NAME'] == 'user_id')
+            ) { //字段不显示，返回空
+                continue;
+            }
+            //   var_dump($commentInfo);
+            $cnName = empty($commentInfo['name']) ? $columnInfo['COLUMN_NAME'] : $commentInfo['name'];
+            $name = $columnInfo['COLUMN_NAME'];
+            if($commentInfo['options']){ //有选项，则在列表页调用函数根据key找到对应的value
+
+                if(substr($commentInfo['rawOption'],0,6) == 'table='){ //显示关联表字段
+                    $arr = explode('=',$commentInfo['rawOption']);
+                    $tableOption = $arr[1];
+                    $functionName = "|tableValue='$tableOption'";
+                    $function_name = 'tableValue';
+                    $parameter = $tableOption;
+
+                }else{
+                    if(substr($commentInfo['rawOption'],0,10) == 'show_func='){// 显示函数结果
+                        $arr = explode('=',$commentInfo['rawOption']);
+                        $funcName = $arr[1];
+                        $functionName = "|$funcName='$name'";
+                        $function_name = $funcName;
+                        $parameter = $name;
+                    }else{ //显示配置选项的name
+                        //var_dump($commentInfo['options']);exit;
+                        C($name,$commentInfo['options']);
+                        $functionName = "|optionsValue='$name'";//.ucfirst($name);
+                        $function_name = 'optionsValue';
+                        $parameter = $name;
+                    }
+                }
+                $func = ['function_name'=>$function_name,'parameter'=>$parameter];
+                $fields[$name] = $func;
+            }
+        }
+        return $fields;
     }
 
 
@@ -401,10 +587,10 @@ class TableInfo extends Controller
      * 解析注释获取name和选项
      * 格式说明：
      * 以 |-，之类的做分隔
-     * 注释标题 - htm控件类型 - 提示 | 校验类型 | 展现页面 | 选项
+     * 注释标题 - htm控件类型 - 提示 | 展现页面 | 校验类型 | 选项 | 自动完成
      *
      * 注释标题: 一般是字段的中文标题，form表单的label
-     * html控件类型: select,checkbox,input,textare等
+     * html控件类型: select,checkbox,input,textarea等
      * 提示:一般是此字段的填写规范，如：允许字母或数字
      * 校验类型:reqiure,email,username,mobile等,用于后台校验,对应thinkphp的校验格式
      *
@@ -419,6 +605,11 @@ class TableInfo extends Controller
      * 添加，修改不显示，列表显示，一般像创建时间就是这样  001 = 1
      * 如果要让这个字段在所有页面都不显，就设为 000=0
      *
+     * 展现页面又分后台，用中心，前台三个模块，默认为所有模块配置，要指定其它模块用中划线分隔
+     * 前台只有两个页面列表，详情
+     * 1111-1100-01  后台全部显示-前台添加修改显示-前台列表不显示，详情显示
+     * 后台也做为通用配置，如果用户中心，前台都没有配置，则用默认后台的配置
+     *
      * 选项： 选项1:选项1值，选项2：缺项2值
      * 状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中
      *
@@ -426,6 +617,8 @@ class TableInfo extends Controller
      * 验证正则支持，这个比较蛋疼，由于正则里可以使用任意字符，与我们使用的分隔符有冲突，使用特殊符号将正则括起来
      * <<正则表达式>>,在此只允许验证里出现，否则就不知道<< >>括起来的什么了，注意目前<<>>不支持转义，如果正则表达式里还有<< >> 那就只能over了。
      *  首先将正则提取出来，再进行分隔
+     *
+     * 自动完成，用于保存时，自动调用相关涵数，来处理提交数据的。
      *
      * @param $comment
      * @return array
@@ -466,7 +659,7 @@ class TableInfo extends Controller
             //状态-select-禁用则不能访问 | 7
             case ($c >= 2):
                 $showPage = trim($arr[1]);
-                if (!is_numeric($showPage)) E('显示页面属性必须是数字');
+                //if (!is_numeric($showPage)) E('显示页面属性必须是数字');
 
 
             //状态-select-禁用则不能访问
@@ -505,25 +698,56 @@ class TableInfo extends Controller
 
         //显示页面分析
 
-        if (strlen($showPage)<1 || $showPage == null) $showPage = 15;
 
-        if(strlen($showPage) == 4) $showPage = bindec($showPage);
+
+
+        $allModule = explode('-',$showPage);
+        if(count($allModule) == 3){
+            $admin = $allModule[0];
+            $user = $allModule[1];
+            $home = $allModule[2];
+            //var_dump($allModule,$admin,$user);
+        }elseif(count($allModule) == 2){
+            $admin = $allModule[0];
+            $user = $allModule[1];
+            $home = $admin;
+        }else{
+            $admin = $allModule[0];
+            $user = $admin;
+            $home = $admin;
+        }
+
+
         $arrShowPages = [];
-        if ($showPage & self::ADD) $arrShowPages[] = 'add';
-        if ($showPage & self::EDIT) $arrShowPages[] = 'edit';
-        if ($showPage & self::LISTS) $arrShowPages[] = 'list';
-        if ($showPage & self::SEARCH) $arrShowPages[] = 'search';
+        $arrShowPages['admin'] = $this->getShowPage($admin,'admin');
+        $arrShowPages['user'] = $this->getShowPage($user,'user');
+        $arrShowPages['home'] = $this->getShowPage($home,'home');
+
+        //echo $comment;
+        //var_dump($arrShowPages);exit;
 
         //选项分析
+        $rawOption = $options; //原始option值
         if (!empty($options)) {
-            $arrOptions = [];
-            $items = explode(",", $options);
-            $options = [];
-            foreach ($items as $item) {
-                list($value, $text) = explode(':', $item);
-                $arrOptions[$value] = "$text";
+            if( strpos($options,'function') !== false ){
+                    $func = explode('=',$options)[1];
+                    $r = $func();
+                    $options = [];
+                    foreach ($r as $k => $v){
+                        $options[$v['id']] = $v['title'];
+                    }
+                    //var_dump($options);
+                    //exit('x');
+            }else{
+                $arrOptions = [];
+                $items = explode(",", $options);
+                $options = [];
+                foreach ($items as $item) {
+                    list($value, $text) = explode(':', $item);
+                    $arrOptions[$value] = "$text";
+                }
+                $options = $arrOptions;
             }
-            $options = $arrOptions;
         }
 
         //验证规则分析
@@ -546,13 +770,41 @@ class TableInfo extends Controller
 
         }
 
-        $ret = compact('name', 'htmlType', 'tips', 'showPage', 'arrShowPages', 'checkType','arrRules', 'options','auto');
+        $ret = compact('name', 'htmlType', 'tips', 'showPage', 'arrShowPages', 'checkType','arrRules', 'options','auto','rawOption');
         return $ret;
+    }
+
+    function getShowPage($showPage,$module){
+        if (strlen($showPage)<1 || $showPage == null) $showPage = 15;
+        if(strlen($showPage) == 4) $showPage = bindec($showPage);
+        $arrShowPages = [];
+
+        if ($showPage & self::ADD) $arrShowPages[] = 'add';
+        if ($showPage & self::EDIT) $arrShowPages[] = 'edit';
+        if ($showPage & self::LISTS) {
+            $arrShowPages[] = 'list';
+            //$arrShowPages[] = 'index';
+        }
+        if ($showPage & self::SEARCH) $arrShowPages[] = 'search';
+
+        if($module == 'home'){
+            if(isset($arrShowPages[0]) && $arrShowPages[0] == 'add'){
+                $arrShowPages[0] = 'list';
+            }
+
+            if(isset($arrShowPages[1]) && $arrShowPages[1] == 'edit'){
+                $arrShowPages[1] = 'show';
+            }
+            if(isset($arrShowPages[2]))  unset($arrShowPages[2]);
+            if(isset($arrShowPages[3]))  unset($arrShowPages[3]);
+        }
+        return $arrShowPages;
     }
 
     //根据一个字段信息创建一个表单项
     function createFormRow($columnInfo)
     {
+
         $inputAttribute = [];
         //$typeInfo = $this->getColumnType($columnInfo['COLUMN_TYPE']);
         $type = strtoupper($columnInfo['DATA_TYPE']);
@@ -567,11 +819,11 @@ class TableInfo extends Controller
             $inputAttribute['type'] = "text";
             $inputAttribute['size'] = 30;
             if ($type == "varchar" && $columnInfo['size'] > 255) { //大文本域
-                $inputAttribute['type'] = "textare";
+                $inputAttribute['type'] = "textarea";
                 $inputAttribute['row'] = 10;
             }
         } elseif (in_array($type, ["BLOB", "TEXT", "MEDIUMBLOB", "MEDIUMTEXT", "LONGBLOB", "LONGTEXT"])) {
-            $inputAttribute['type'] = "textare";
+            $inputAttribute['type'] = "textarea";
             $inputAttribute['row'] = 10;
         } else {
             $inputAttribute['type'] = "text";
@@ -579,7 +831,9 @@ class TableInfo extends Controller
         }
 
         $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
-        if (!in_array($this->page, $commentInfo['arrShowPages'])) { //字段不显示，返回空
+        //var_dump($this->page);
+        //var_dump($commentInfo['arrShowPages']);//exit;
+        if (!in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])) { //字段不显示，返回空
             return '';
         }
         if (!empty($commentInfo['options'])) {
@@ -590,6 +844,13 @@ class TableInfo extends Controller
         $name = $columnInfo['COLUMN_NAME'];
         $inputStr = "";
         $confStr = "";
+
+
+        if( MODULE_NAME == 'User'  && ($this->page == 'search' )){
+            if($name == 'user_id'){
+                return '';
+            }
+        }
 
 
         $validate = $this->getFieldJsValidateRules($commentInfo);
@@ -626,10 +887,28 @@ class TableInfo extends Controller
 
             }elseif($commentInfo['htmlType'] == 'editor'){
                 $inputStr .= "<html:editor id=\"editor\" name=\"$name\" type=\"kindeditor\" style=\"width:680px;height:300px;visibility:hidden;\" >" . '{$vo.' . $name . '}' . "</html:editor>"; //
-            }elseif ($commentInfo['htmlType'] == "textare") {
-                $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\">" . '{$vo.' . $name . '}' . "</textarea>";
-            }
+            }elseif($commentInfo['htmlType'] == 'file'){
+                $inputStr .= "<input class=\"avatar-input\" id=\"$name\"  name=\"$name\" type=\"file\">";
+                $this->haveUpload = true;
+            }elseif($commentInfo['htmlType'] == 'img'){
+                $inputStr .= "<input onchange=\"previewImg(this,'{$name}')\" class=\"avatar-input\" id=\"$name\"  name=\"$name\" type=\"file\">";
+                $inputStr .= "";
+                $inputStr .= "";
 
+                $inputStr .= "<div id='preview_img_{$name}'>
+                                <notempty name=\"vo['$name']\">
+                                <img src=" . '"{$vo.' . $name . '|img}"' . " width='100' />
+                                 <else />
+                                 <img src=" . '"{$Think.config.DEFAULT_IMG}"' . " width='100' />
+                                 </notempty>
+                                 </div>";
+                $inputStr .= "";
+                //$this->haveImg = true;
+                $this->haveUpload = true;
+            }elseif($commentInfo['htmlType'] == 'textarea'){
+                $inputStr .= "<textarea rows=\"5\" {$validate}  class=\"form-control\" name=\"$name\"  id=\"$name\">" . '{$vo.' . $name . '}' . "</textarea>";
+            }
+//var_dump($commentInfo);
 
             if ($commentInfo['options']) {
                 $this->options[$columnInfo['COLUMN_NAME']] = var_export($commentInfo['options'], 1);
@@ -640,17 +919,13 @@ class TableInfo extends Controller
                     if($this->page == 'search'){
                         $first = 'first="请选择"';
                         $this->assign("{$name}_selected", I($name));
+
                     }
 
                     if($this->page == 'edit'){
                         $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
                     }
                     $inputStr .= "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
-                    /*$inputStr .= " <select name=\"select\" id=\"select\">";
-                    foreach($commentInfo['options'] as $value => $text){
-                        $inputStr.="<option value=\"{$value}\">$text</option>";
-                    }
-                    $inputStr .= "</select>";*/
 
                 } elseif ($commentInfo['htmlType'] == "radio") {
 
@@ -663,22 +938,19 @@ class TableInfo extends Controller
                     if($this->page == 'edit'){
                         $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
                     }
-                    //$inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
-                    $inputStr .= "<html:radio radios='opt_{$name}' checked='{$name}_selected'  name='{$name}' />";
 
+                    $inputStr .= "<html:radio radios='opt_{$name}' checked='{$name}_selected' name='{$name}' separator='&nbsp;&nbsp;' />";
 
                 } elseif ($commentInfo['htmlType'] == "checkbox") {
-                    $first =  "";
-                    if($this->page == 'search'){
-                        $first = 'first="请选择"';
-                        $this->assign("{$name}_selected", I($name));
-                    }
-
                     if($this->page == 'edit'){
-                        $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
+                        $this->assign("{$name}_selected", $this->data[$name]);
                     }
-                    //$inputStr .= "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
                     $inputStr .= "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
+
+                   /* foreach ($commentInfo['options'] as $value => $text) {
+                        $inputStr .= "  <input {$validate}  name=\"{$name}\" id=\"{$name}\"  type=\"checkbox\" value=\"$value\">{$text} ";
+                    }*/
+                    //$inputStr = "<input name=\"$name\" type=\"text\" id=\"$name\" size=\"{$inputAttribute['size']}\" />";
                 }
             }
 
@@ -690,10 +962,10 @@ class TableInfo extends Controller
             }elseif ($inputAttribute['type'] == 'hidden'){
                 $inputStr .= "<input  type=\"hidden\"  class=\"form-control\" name=\"$name\" id=\"$name\" size=\"{$inputAttribute['size']}\" value=" . '"{$vo.' . $name . '}"' . " />";
                 $this->hidden = 1;
-            }elseif ($inputAttribute['type'] == "textare") {
+            }elseif ($inputAttribute['type'] == "textarea") {
                 $inputStr .= "<textarea {$validate}  class=\"form-control\" name=\"$name\" style=\"width:800px;height:400px;visibility:hidden;\" id=\"$name\">" . '{$vo.' . $name . '}' . "</textarea>";
             } elseif ( in_array($inputAttribute['type'],['date','time']) ){
-                $inputStr .= '<div class="input-group date" id="datetimepicker1">
+                $inputStr .= '<div class="input-group date" id="datetimepicker_'.$name.'">
                     <input type="text" id="'.$name.'" name="'.$name.'" class="form-control" value= '. '"{$vo[' . $name . '] ? $vo[' . $name . '] : $_GET[' . $name . ']}"'.' />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
@@ -703,7 +975,7 @@ class TableInfo extends Controller
                 if($inputAttribute['type'] == 'date') {
                     $inputStr .= '<script>
                     $(function () {
-                        $("#datetimepicker1").datetimepicker({
+                        $("#datetimepicker_'.$name.'").datetimepicker({
                                     format: "YYYY-MM-DD ",
                                 });
                      });
@@ -712,7 +984,7 @@ class TableInfo extends Controller
                 }else{
                     $inputStr .= '<script>
                     $(function () {
-                        $("#datetimepicker1").datetimepicker({
+                        $("#datetimepicker_'.$name.'").datetimepicker({
                                     format: "YYYY-MM-DD HH:mm:ss",
                                 });
                      });
@@ -748,14 +1020,14 @@ class TableInfo extends Controller
 
             }
         }
-
+        //exit('xxx222');
 
         $tips = $commentInfo['tips'];
         $this->name = $name;
         $this->cnName = $cnName;
         $this->inputStr = $inputStr;
         $this->tips = $tips;
-        $this->required = $commentInfo['checkType'] == 'require';
+        $this->required = (strpos($commentInfo['checkType'],'require') !== false);
         if($this->page == 'search'){
             $r = $this->fetch("tpl_search_row");
         }else{
@@ -942,6 +1214,7 @@ class TableInfo extends Controller
                 }else{
                     $strValidate .= 'nullmsg="请填写信息"';
                 }
+                $strValidate .= 'datatype="*"';
             }
 
             if($v['type'] == 'reg'){
@@ -964,6 +1237,10 @@ class TableInfo extends Controller
             //var_dump($v);
         }
         return $strValidate;
+    }
+
+    function testTrue(){
+        return true;
     }
 
 

@@ -112,6 +112,64 @@ CREATE TABLE `user` (
 ```
 
 
+# 函数使用
+show_func 显示列表数据时，调用函数，参数为当前字段的值。
+
+例1：显示支付方式。
+
+```
+
+ //cgf 格式
+ `channel` varchar(255) DEFAULT '' COMMENT '支付渠道|0011-0-11|require|show_func=get_pay', 
+ 
+ // channel值一般是 alipay,wxpay等。但希望显示出来的是支付宝，微信。就可以用函数来处理了。
+
+ //php 代码
+ function get_pay($selfValue){
+    $paymethod = ['alipay'=>'支付宝','wxpay'=>'微信'];
+    return $paymethod[selfValue];
+ }
+ 
+ //这样在列表里就能看到支付方式的汉字了，而不是字母代号
+```
+
+
+
+
+例2：显示分类名。  分类一般用分类id关联，但显示时，却希望显出中文。
+```
+// cgf格式
+  `category_id` int(11) unsigned NOT NULL COMMENT '分类id-select|1111|require|function=get_select_by_category',
+//php 代码
+  function get_select_by_category(){
+    $r = M('Category')->field('id,title')->select();
+    return $r;  //从分类表，取出分类id,分类title
+
+  }
+
+  //这样category_id 显示的select就会是这样的 <option value="分类id1">分类tilte1</option>
+```
+
+
+
+ # 跨库支持
+ ```
+  $dbConnection= [
+                    'DB_TYPE'=>'mysql',
+                    'DB_HOST'=>'localhost',
+                    'DB_PORT' => '3306',
+                    'DB_NAME'=>'test',
+                    'DB_USER'=>'root',
+                    'DB_PWD'=>'123456',
+                    'DB_PREFIX'=>'',
+                  ]
+  //在实例化的时候传入db连接即可
+  $tableInfo = new TableInfo('edit',$dbConnection);
+```
+
+
+
+
 
 # 截图
 
