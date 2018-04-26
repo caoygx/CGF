@@ -66,7 +66,7 @@ html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的�
 ## 第五部分   回调函数处理  
 比如保存多选的tag时，页面上传过来的是个数组 tag = [a,b,c] ，但想保存为 a,b,c,则此字段可使用函数回调来处理  
 写法 implode=\,,###
-等号前面是函数名，后面是参数，用逗号分隔。像implode函数，第一参数就是逗号，则需要转义写为 \,
+等号前面是函数名，后面是参数，用逗号分隔。像implode函数，第一参数就是逗号，则需要转义写为 \\,
 
    
 
@@ -131,7 +131,49 @@ show_func 显示列表数据时，调用函数，参数为当前字段的值。
  }
  
  //这样在列表里就能看到支付方式的汉字了，而不是字母代号
+
+
 ```
+
+
+例2:多参数支持，显示产品详情链接.订单里显示产品名，想要点击能打开产品详情，详情页需要传产品id参数，可用下面方式。
+
+方式一: 
+```
+//cgf格式
+`course_title` varchar(255) NOT NULL DEFAULT '' COMMENT '产品名称|1011||show_func=order_course_title',
+
+//php
+function order_course_title($title,$key,$v){ // 调用代码：call_user_func_array(函数名,[字段值,字段名,此行记录所有数据]);
+    
+    $title = $v['course_title'];
+    $url = "http://www.21mmm.com/course/{$v['course_id']}";
+    $url = "<a href='{$url}' target='_blank' title='{$title}'>$title</a>";
+    return $url;
+}
+```
+
+
+方式二:在函数名后，指定参数course_id。 未来也可以实现可编程方式。
+如: |fcuntion order_course_title(course_id), 直接写代码，然后通过程序来解释cgf代码
+```
+//cgf格式
+`course_title` varchar(255) NOT NULL DEFAULT '' COMMENT '产品名称|1011||show_func=order_course_title-course_id',
+
+//php
+function order_course_title($title,$key,$course_id){
+    
+    $title = $v['course_title'];
+    $url = "http://www.21mmm.com/course/{$v['course_id']}";
+    $url = "<a href='{$url}' target='_blank' title='{$title}'>$title</a>";
+    return $url;
+}
+```
+
+未来支持默认函数调用，如order表user_id字段  "用户id|1111||show_func" 不用加=指定函数，只要定义了show_func,就会默认调用 order_user_id()这个函数
+
+
+
 
 
 
@@ -183,3 +225,13 @@ show_func 显示列表数据时，调用函数，参数为当前字段的值。
  可以做个生成工具
  还可以用这个工具来直接生成json来描述，这样就是难看一点，但描述更清晰
  更进一步可以用工具来生成其它更精简的格式
+
+
+
+ # 下一步支持
+ 1.字段的fuction可以区分是后端function,还是前端function.
+ 比如排序字段，后台列表希望显示出的是个可编辑的input,这样直接就能在列表页更改排序。
+ 如果不区分的话，后台function将字段变成<input type="text"> ,前台列表接口sort字段获取到也是这个html,那就完完了。
+ 所以可以用php_function表示是个后端函数，tpl_function表示模板函数，js_fuction表示js函数
+
+ 可以试播-select|1111||0:否,1:是
