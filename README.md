@@ -230,8 +230,19 @@ function order_course_title($title,$key,$course_id){
 
  # 下一步支持
  1.字段的fuction可以区分是后端function,还是前端function.
- 比如排序字段，后台列表希望显示出的是个可编辑的input,这样直接就能在列表页更改排序。
+ 如排序字段，后台列表希望显示出的是个可编辑的input,这样直接就能在列表页更改排序。
  如果不区分的话，后台function将字段变成<input type="text"> ,前台列表接口sort字段获取到也是这个html,那就完完了。
  所以可以用php_function表示是个后端函数，tpl_function表示模板函数，js_fuction表示js函数
+
+ 如：后台商品表有display字段表示显示状态,数据库值为0,1.但在后台和用户中心希望通过函数转为文字，但返回到前台的接口，希望显示原始值，这样前端页面可以根据1或0来判断，是上架按钮，还是下架按钮。
+但这种情况下，后台也需要有对应的功能。
+商品名     显示状态                                          操作
+苹果6手机  上架中(通过函数将display的值1转为文本“上架中”)      下架(通过if(dispaly==1)则显示此文字)
+
+此时有两种办法
+  1.if(display=='上架') 显示下架
+  2.增加个display_text字段，列表展现时，显示display_text的内容
+
+
 
  可以试播-select|1111||0:否,1:是
