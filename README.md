@@ -242,7 +242,19 @@ function order_course_title($title,$key,$course_id){
 此时有两种办法
   1.if(display=='上架') 显示下架
   2.增加个display_text字段，列表展现时，显示display_text的内容
+感觉都不科学
 
 
 
  可以试播-select|1111||0:否,1:是
+
+
+
+用命名空间和作用域解决
+list.function=show 列表调用函数
+search.function=show 搜索调用函数
+all.function=show //默认所有,可省略
+admin.list.function=show   后台列表显示调用函数
+
+显示关联表相应字段
+user_id|1111||list.table=field(username,sex)-replace //replace替换,add默认add 
