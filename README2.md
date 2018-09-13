@@ -258,3 +258,47 @@ admin.list.function=show   后台列表显示调用函数
 
 显示关联表相应字段
 user_id|1111||list.table=field(username,sex)-replace //replace替换,add默认add 
+
+
+
+
+
+
+
+
+
+
+
+# 数组定义使用方法
+
+## 公共
+zh  对应字段含义
+
+## 列表
+
+1.关联表
+related_table 关联表定义，相当于join
+related_field 关联表中对应的字段，相当于join时右表的关联字段 
+table_name 关联表
+fields => ["state","name"], 关联表要显示的字段
+"way" => "add", 展现方式，
+                add表示左表的字段也显示，右表字段也显示。
+                replace表示左表字段不显示，用右表的字段代替
+例：
+      "related_table" => [
+          "related_field" => "issue_id",
+          "table_name" => "goods_activity",
+          "fields" => ["state"],
+          "way" => "add",//replace 1.add表示显示user_id，并且增加field定义的字段 2.replace 表示用field字段替换掉user_id
+          'function'=>"date"
+      ]
+
+2.show_text  数字枚举字段，显示对应的文字含义
+
+3. "class"=>"c_trans_state",//给列表表格单元格增加样式，便于js能定位到相应的单元格
+
+
+
+## 搜索
+## 编辑
+## 添加
