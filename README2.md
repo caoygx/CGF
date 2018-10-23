@@ -298,7 +298,59 @@ fields => ["state","name"], 关联表要显示的字段
 3. "class"=>"c_trans_state",//给列表表格单元格增加样式，便于js能定位到相应的单元格
 
 
+函数定义
+### 代表字段本身的值， 
+@@@代表本行记录的值，有时需要引用其它字段的值参数计算，就用@@@传递行记录的所有值
+col
+1.'function'=>'date("y-m-d","###")'; //将被解析为 date("y-m-d",$v['col']);
+2.'function'=>'getData('a','###','@@@')';//将被解析为 getData("a",$v['col'],$v);
+
+
+
 
 ## 搜索
 ## 编辑
 ## 添加
+
+
+SqlToCgfDefinition.php
+根据表定义生成cgf配置文件
+
+sql表定义解析后的数组
+```
+
+"title"=>[
+"name"=>"title",
+"zh"=>"标题",
+"arrShowPage"=>
+ 
+            ["admin"]=>
+              
+               "add",
+               "edit",
+               "list",
+               "search"
+       
+              ["user"]=>
+              
+                
+               "add",
+               "edit",
+               "list",
+               "search"
+           
+              ["home"]=>
+
+               "list",
+               "show"
+    ]     
+           
+```   
+
+1.单模块
+$cgf=["base"=>['字段1'],"list"=>['字段1']]
+
+2.多模块
+$cgf['admin']=["base"=>['字段1','字段2','字段3'],"list"=>['字段1']]
+$cgf['user']=["base"=>['字段1','字段2','字段3'],"list"=>['字段2']]
+$cgf['home']=["base"=>['字段1','字段2','字段3'],"list"=>['字段3']]
