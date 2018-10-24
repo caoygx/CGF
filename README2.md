@@ -271,6 +271,108 @@ user_id|1111||list.table=field(username,sex)-replace //replace替换,add默认ad
 
 # 数组定义使用方法
 
+## 格式参考
+```
+return [
+    //字段基础信息定义，list,add,edit,search中如果有对应的字段，由对应的字段信息与base合并
+    'base' => [
+        'id' => [
+            'zh' => '编号22',
+        ],
+        
+        'status' => [
+            'zh' => '订单状态',
+            'show_text' => 'status_text',
+            'type'=>'select',
+            'options' => [
+                0 => '默认',
+                1 => '处理中',
+                2 => '交易成功',
+                3 => '交易失败',
+            ],
+        ],
+
+       
+        'user_type' => [
+            'zh' => '用户类型',
+            'type'=>'select',
+            'options' => [
+                0 => '机器人',
+                1 => '真人',
+            ],
+        ],
+        'ch' => ['zh' => '渠道'],
+
+    ],
+    //列表
+    'list' => [
+
+        'id' => [
+        ],
+        'create_t'=>[
+            //'function'=>'date="y-m-d",###', //{$data.name|substr=###,0,3} //tp模板函数定义方式
+            'function'=>'date("Y-m-d H:i:s","###")', //普通函数定义方式
+        ],
+
+        //会员号,渠道
+        'openid' => [
+            'related_table' => [
+                'table_name' => 'user',
+                'fields' => ['username',  'address',  'phone', 'nickname'],
+                'way' => 'replace',//replace 1.add表示显示user_id，并且增加field定义的字段 2.replace 表示用field字段替换掉user_id
+            ]
+        ],
+
+    ],
+
+
+    'add' => [
+       
+        'create_t' => [
+            'type' => 'datetimePicker',//时间
+            'format' => 'y-m-d H:i:s',
+        ],
+
+        'status' => [
+            'type' => 'select',
+            'options' => [
+                0 => '禁用',
+                1 => '启用'
+            ],
+        ],
+
+    ],
+
+    'search' => [
+   
+        'user_type' => [
+
+            'size' => 10,
+            'zh' => '用户类型',
+        ],
+
+        'goods_name' => [ ],
+        'ch' => [            'type' => 'text',        ],
+        'status' => [ ],
+
+    ],
+
+    'module' => [
+        'admin' => [
+            "add" => ['user_id' => []],
+            "edit" => ['user_id' => []],
+            "list" => ['user_id' => []],
+
+        ],
+        'user' => [
+            "list" => ['user_id' => []]
+        ],
+
+    ]
+
+];
+```
+
 ## 公共
 zh  对应字段含义
 
