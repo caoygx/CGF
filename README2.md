@@ -301,7 +301,7 @@ return [
                 1 => '真人',
             ],
         ],
-        'ch' => ['zh' => '渠道'],
+   
 
     ],
     //列表
@@ -313,6 +313,10 @@ return [
             //'function'=>'date="y-m-d",###', //{$data.name|substr=###,0,3} //tp模板函数定义方式
             'function'=>'date("Y-m-d H:i:s","###")', //普通函数定义方式
         ],
+        'nickname'=>[
+        	'js_function'=>'getName', //前端处理函数
+        	'backend_function'=>'getName' //后端处理函数
+        ]
 
         //会员号,渠道
         'openid' => [
