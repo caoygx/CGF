@@ -91,6 +91,13 @@ html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的�
 #### [ 0:禁用,1:正常,2:审核中 ]   表示状态这个select控件有3个选项，0,1,2表示key  
 
 
+##表自身信息定义
+用户表|lock|modifypwd:修改密码,edit:编辑
+#### [ 用户表 ]  表中文名
+#### [ lock ]  是否锁定定义好的配置文件和模板文件
+#### [ modifypwd:修改密码:id,edit:编辑:id ]  操作行为 js方法名 modifypwd,修改密码是操作的名称，id表示将id字段作为参数
+
+
 # 表定义的参考格式
 ```sql
 
@@ -105,7 +112,7 @@ CREATE TABLE `user` (
   `flag` varchar(255) NOT NULL DEFAULT '' COMMENT '标记-select|1100|require|0:推荐,1:置顶,2:广告',
   `intro` text COMMENT '用户介绍-editor|1100',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8 COMMENT='用户表|lock|modifypwd:修改密码,edit:编辑';
 
 
 
@@ -274,6 +281,7 @@ user_id|1111||list.table=field(username,sex)-replace //replace替换,add默认ad
 ## 格式参考
 ```
 return [
+
     //字段基础信息定义，list,add,edit,search中如果有对应的字段，由对应的字段信息与base合并
     'base' => [
         'id' => [
@@ -297,8 +305,8 @@ return [
             'zh' => '用户类型',
             'type'=>'select',
             'options' => [
-                0 => '机器人',
-                1 => '真人',
+                0 => '企业',
+                1 => '个人',
             ],
         ],
    
@@ -326,6 +334,18 @@ return [
                 'way' => 'replace',//replace 1.add表示显示user_id，并且增加field定义的字段 2.replace 表示用field字段替换掉user_id
             ]
         ],
+        'avatar' => 
+		    [
+		      'name' => 'avatar',
+		      'type' => 'img',
+		      'size' => 30,
+		      'zh' => 'head',
+		      'showPage' => '1111',
+		      'function' => "list_img_show(额外参数1)", //调用函数处理，会将a.jpg转成<img src="a.jpg">，
+		      										这样会导致api接口里也返回<img src="a.jpg">
+			  'tpl_function'=>'tpl_img_show()'
+
+		    ],
 
     ],
 
@@ -410,6 +430,21 @@ fields => ["state","name"], 关联表要显示的字段
 col
 1.'function'=>'date("y-m-d","###")'; //将被解析为 date("y-m-d",$v['col']);
 2.'function'=>'getData('a','###','@@@')';//将被解析为 getData("a",$v['col'],$v);
+3.'function'=>'to_img()'; //默认会将字段值作为第一个参数,如图像字段会解析为to_img('a.jpg','额外参数','整行记录')
+
+'function' => "list_img_show(额外参数1)", //调用函数处理，会将a.jpg转成<img src="a.jpg">，
+		      										这样会导致api接口里也返回<img src="a.jpg">
+'tpl_function'=>'tpl_img_show()', //会在模板里生成此函数，如{avater|tpl_img_show}，解析上面的问题
+
+配置好后，然后后台，web,wap,android,ios来解析配置生成对应的组件
+如 ['avatar'=>['type'=>'img','width'=>5]]  
+后台列表页看到后，会将其变成小缩略图<img src="avatar.jpg" width="50"> 
+后台添加页看到后，会将其变为上传图片的组件，有上传选择框和缩略图预览
+wap显示页面看到后,会将其变为<img src="avatar.jpg" width="1rem">
+android看到后，会将其变为 <ImageView  android:src="avatar.jpg" />
+
+
+
 
 
 
