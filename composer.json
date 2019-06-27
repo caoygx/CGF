@@ -9,6 +9,6 @@
     ],
     "require": {
     	"php": ">=7.0",
-        "topthink/think-orm": "^v2.0.0",
+        "topthink/think-orm": "^v2.0.0"
     }
 }
