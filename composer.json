@@ -1,0 +1,14 @@
+{
+    "name": "rrbrr/cgf",
+    "description": "generate form from table",
+    "authors": [
+        {
+            "name": "rrbrr",
+            "email": "caoygx@qq.com"
+        }
+    ],
+    "require": {
+    	"php": ">=7.0",
+        "topthink/think-orm": "^v2.0.0",
+    }
+}
