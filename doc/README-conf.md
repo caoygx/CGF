@@ -1,11 +1,79 @@
+#目录结构和设计说明
+definition 是所有表定义
+Form下是具体表单的实现类，继承Form.class.php
+Validate下是各框架下的验证实现，继承Validate.php
 
 
+#definition结构说明
+#### [模块名][页名] 
 
+### 模块名有下列项目  
+admin  后台
+user  用户中心
+home  前台
+
+
+### 页面有下列项目  
+all 所有字段定义，等于list定义
+add  添加页
+edit  
+list  
+search  
 
 # 数组定义使用方法
 
-## 公共
-'type'=>'text,datepicker,datePickerRang',
+## 公共属性
+
+##### name 表单名，一般和字段名相同  
+##### type 表单类型，所有表单类型的实现都在Form目录下，要继承Form类  
+1. 所有html表单类型都可以。如text,select
+2. 自定义类型   
+    editor 富文件编辑器  
+    img 图片上传，带图片预览  
+    file 文件上传  
+    files 多文件上传  
+    datepicker(日期选择控件)  
+    datetimePicker(时间选择控件)  
+    datePickerRang(日期范围选择控件)  
+    datetimePickerRang(时间范围选择控件)  
+    
+##### size 表单的尺寸，一般用于text文本框  
+##### zh   中文标签名  
+##### options 当表单类型是select时的选项，checkbox,radio也可以有此字段。  
+      1.枚举格式。 如 
+```php
+   
+      'options'=>[
+          0=>'禁用'
+          1=>'正常'，
+          2=>'审核中'
+        ]
+```   
+      2.函数获取。 如
+```php      
+      'options'=>[
+          'function'=>"get_allf_lag('a','###','@@@')"
+        ]
+```
+##### rawOption 数据表字段的原生定义，一般只有表字段定义了选项，才会有。  
+    如 'rawOption' => '0:否,1:是' 
+##### validate 验证规则
+验证规则可以有多个，会依次执行验证。
+```php
+    'validate' => [
+        ['require:必须填写',]
+        ['<</\w{3,6}/i>> : 用户名不合法'],
+        ['checkUsername:用户名已经被使用了'],
+    ]
+```    
+
+##### autoComplete
+
+
+
+
+
+#### 实例
 
 zh  对应字段含义
 base=>[
@@ -63,7 +131,13 @@ search=>[
 对于create_time添加页和搜索页使用不同组件问题，sql不太好定义。最好用config.非要用sql,也用创建时间-datepicker|datetimePicker
 但这种方式也不能解决各模块组件不同的问题。如用户中心搜索页，添加页和后台搜索页，添加页都用不同组件的问题。
 
-
+## base
+base 通常是表的所有字段字义，其它表的定义如果要显示关联表的某些字段值，那些显示的字段的信息就是从base里取出来的。
+例如： 
+  搜索框增加选项步骤
+    1.可在base里添加相应的字段。
+    2.在search里增加。
+    
 
 ## 组件
 1.搜索页，根据配置生成输入框，日期选择控件等。但select的选项值却是在生成组件后，再调用函数生成的。
