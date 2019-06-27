@@ -1,6 +1,11 @@
 {
     "name": "rrbrr/cgf",
     "description": "generate form from table",
+    "keywords": [
+        "form",
+        "table"
+    ],      
+    "license": "Apache-2.0",
     "authors": [
         {
             "name": "rrbrr",
@@ -8,7 +13,15 @@
         }
     ],
     "require": {
-    	"php": ">=7.0",
+        "php": ">=7.1.0",
         "topthink/think-orm": "^v2.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "cgf\\": "src"
+        },
+        "files": [
+            
+        ]
     }
 }
