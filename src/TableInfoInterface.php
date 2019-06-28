@@ -7,7 +7,7 @@ interface TableInfoInterface{
      * @param $tableName
      * @return array
      */
-    public function getTableDefinition($tableName);
+    public function getAllColumnDefinition(string $tableName);
 
 
     /**

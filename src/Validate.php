@@ -7,8 +7,6 @@
  */
 
 namespace Cgf;
-
-
 class Validate
 {
 

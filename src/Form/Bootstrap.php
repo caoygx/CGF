@@ -1,8 +1,9 @@
 <?php
 namespace Cgf\Form;
+use Cgf\Form;
 
 
-class BootstrapForm extends Form {
+class Bootstrap extends Form {
     //public $tplDir="";
     public $tplDir = __DIR__."/tplBootstrap";
     function __construct()

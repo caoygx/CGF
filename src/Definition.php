@@ -9,15 +9,16 @@ namespace Cgf;
  */
 class Definition
 {
-    public $definitionDir = "definition";
+    public $savePath;
     public $originalDefinition = [];//源定义配置
     public $compiledDefinition = [];//编译后的配置
     public $modules = ['common', 'admin'];//,'user','home','api'
     public $currentModule = 'common';
     public $tableName;
 
-    function __construct($tableName, $module = "common")
+    function __construct($tableName, $savePath,$module = "common")
     {
+        $this->savePath = $savePath.'';
         $this->tableName = $tableName;
         $this->originalDefinition = $this->getOriginalDefinition();
         $this->currentModule = $module;
@@ -26,7 +27,7 @@ class Definition
 
     function getOriginalDefinition()
     {
-        return include($this->definitionDir . '/' . $this->tableName . '.php');
+        return include($this->savePath . '/' . $this->tableName . '.php');
     }
 
     function compile()
@@ -77,6 +78,7 @@ class Definition
      */
     function mergeProperty($base, $pageDefinition)
     {
+        if(is_array($pageDefinition) && !empty($pageDefinition))
         foreach ($pageDefinition as $column => $property) {
             if (isset($base[$column])) {
                 $pageDefinition[$column] = array_merge($base[$column], $property); //array_merge_recursive 用递归则无法重写base的定义
@@ -93,11 +95,16 @@ class Definition
      */
     function mergeAllPageProperty($base, $pageDefinition)
     {
+        if(is_array($pageDefinition) && !empty($pageDefinition))
         foreach ($pageDefinition as $column => $property) {
+            if(empty($property)) continue;
+
             if(!is_string($property)){
                 $column = $property;
                 $property = [];
             }
+
+
             $base[$column] = array_merge($base[$column], $property);
         }
         return $base;
@@ -192,27 +199,29 @@ class Definition
 
     function compileTableInfo($tableInfo){
         $commonOperation = ['add','edit','delete','resume','resume','pass'];
-        $action = $tableInfo['action'];
-        $arrAction = explode(',',$action);
-
-        //给操作模板函数(通常是js函数)加上表前缀，防冲突
-        foreach ($arrAction as $k=>&$v){
-            $operateConf = explode(':',$v);
-            $operateFunctionName = $operateConf[0];
-            if(!in_array($operateFunctionName,$commonOperation)) {
-                $operateFunctionName = $this->tableName . '_' . $operateFunctionName;
+        if(!empty($tableInfo['action'])){
+            $action = $tableInfo['action'];
+            $arrAction = explode(',',$action);
+            //给操作模板函数(通常是js函数)加上表前缀，防冲突
+            foreach ($arrAction as $k=>&$v){
+                $operateConf = explode(':',$v);
+                $operateFunctionName = $operateConf[0];
+                if(!in_array($operateFunctionName,$commonOperation)) {
+                    $operateFunctionName = $this->tableName . '_' . $operateFunctionName;
+                }
+                $operateConf[0] = $operateFunctionName;
+                $v = implode(':',$operateConf);
             }
-            $operateConf[0] = $operateFunctionName;
-            $v = implode(':',$operateConf);
-        }
-        $action = implode(',',$arrAction);
+            $action = implode(',',$arrAction);
 
-        //$action =  preg_replace('/(.+?):/',"{$this->tableName}_$1:",$action);
-        $tableInfo['action'] = $action;
+            //$action =  preg_replace('/(.+?):/',"{$this->tableName}_$1:",$action);
+            $tableInfo['action'] = $action;
+        }
+
         return $tableInfo;
     }
 
-    function getTableDefinition()
+    function getAllColumnDefinition()
     {
         return $this->compiledDefinition[$this->currentModule]['tableInfo'];
     }

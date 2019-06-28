@@ -42,7 +42,17 @@ class SqlToCgfDefinition
     public $tablePrefix = "pm_";
     public $allModuleDefinition = [];
     public $enableModule=false;
-    public $tableInfoHandle = null;
+    public $tableInfo = [];
+
+    public $savePath;
+
+    /**
+     * @param string $savePath
+     */
+    public function setSavePath($savePath)
+    {
+        $this->savePath = $savePath;
+    }
 
 
     /**
@@ -51,14 +61,17 @@ class SqlToCgfDefinition
      * @param string $module 模块
      * @param TableInfoInterface|null $tableInfoHandle 表信息解析器
      */
-    function __construct($tableName, $module = "common",TableInfoInterface $tableInfoHandle=null)
+    function __construct( $tableInfo,$module = "common",$savePath)
     {
         $this->currentModule = $module;
-        $this->tableName = $tableName;
-        $this->saveDefinitionDir = APP_PATH."/Common/Cgf/definition";
+        $this->tableName = $tableInfo['tableName'];
+        $this->tableInfo = $tableInfo;
+        $this->saveDefinitionDir = $savePath."";
+        if(!file_exists($this->saveDefinitionDir)){
+            mkdir($this->saveDefinitionDir,0777,true);
+        }
 
-        //if(empty($tableInfoHandle)) $tableInfoHandle = new MysqlTableInfo();
-        $this->tableInfoHandle = $tableInfoHandle;
+
         $this->getTableAllColumnDefinition();
 
         $this->generateCgfDefinitionFile();
@@ -67,12 +80,10 @@ class SqlToCgfDefinition
     //获取表所有字段定义
     function getTableAllColumnDefinition(){
 
-        $allColumn = $this->tableInfoHandle->getTableDefinition($this->tableName);
-        $parser = new Parser();
-
+        $allColumn = $this->tableInfo['allColumnDefinition'];
 
         foreach ($allColumn as $k =>$column){
-            $this->allColumnAttribute[$column['COLUMN_NAME']] = $parser->getColumnAttribute($column);
+            $this->allColumnAttribute[$column['COLUMN_NAME']] = CommentParser::getColumnAttribute($column);
         }
 
 
@@ -85,10 +96,9 @@ class SqlToCgfDefinition
      * 获取表注释定义
      */
     function getTableInfo(){
-        $parser = new Parser();
-        $comment = $this->tableInfoHandle->getTableComment($this->tableName);
+        $comment = $this->tableInfo['tableComment'];
         //表注释定义解析
-        $arrComment =  $parser->parseTableComment($comment);
+        $arrComment =  CommentParser::parseTableComment($comment);
         $arrComment['name'] = $this->tableName;
         //var_dump($arrComment);exit('x');
         return $arrComment;
@@ -291,7 +301,7 @@ class SqlToCgfDefinition
         $filePath = $this->saveDefinitionDir."/".str_replace($this->tablePrefix,'',$this->tableName).".php";
 
         if(file_exists($filePath)){
-            $lockDefinitionFile = $this->tableInfoHandle->isLockDefinition($this->tableName);
+            $lockDefinitionFile = $this->tableInfo['isLockDefinition'];
             if($lockDefinitionFile){
                 return false;
             }

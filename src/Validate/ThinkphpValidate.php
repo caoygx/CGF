@@ -1,5 +1,6 @@
 <?php
 namespace Cgf\Validate;
+use Cgf\Validate;
 class ThinkphpValidate extends Validate
 {
     function generateValidate($allColumnConfig){
