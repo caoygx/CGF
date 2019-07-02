@@ -49,7 +49,7 @@ class Mysql implements TableInfoInterface
      * @param $tableName
      * @return array
      */
-    public function getAllColumnDefinition(string $tableName)
+    public function getTableDefinition(string $tableName)
     {
         $sql = "select * from information_schema.columns where table_schema='{$this->dbname}' and table_name='{$tableName}' ";
         //echo $sql;exit;

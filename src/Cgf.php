@@ -19,12 +19,15 @@ class Cgf
 
     public $definition;
     public $form;
-    public $tableName;
+//    public $tableName;
     public $tableFullName;
     public $framework;
     public $tableInfo;
     public $validate;
     public $template;
+
+    public static $config;
+
 
 
     public static function getDbConfigFromThinkPHP($sourceDbConfig)
@@ -54,15 +57,17 @@ class Cgf
      * @param TableInfoInterface $tableInfo 表信息获取类
      * @param $module 要处理的模块
      */
-    function __construct($cgfConf, $tableName, $prefix = '')
+    function __construct($cgfConf)
     {
+        self::$config = $cgfConf;
 
-        $module    = $cgfConf['module'];
+        $module    = $cgfConf['currentName'];
         $dbConfig  = $cgfConf['dbConfig'];
         $savePath  = $cgfConf['savePath'];
         $framework = $cgfConf['framework'];
         $validate  = $cgfConf['validate'];
         $form      = $cgfConf['form'];
+        $tableName      = $cgfConf['tableName'];
 
         $this->saveDefinitionDir = $savePath;
         if (!file_exists($this->saveDefinitionDir)) {
@@ -79,7 +84,7 @@ class Cgf
         $this->tableFullName = $tableName;
 
         $tableInfo                        = [];
-        $tableInfo['allColumnDefinition'] = $this->tableInfo->getAllColumnDefinition($tableName);
+        $tableInfo['allColumnDefinition'] = $this->tableInfo->getTableDefinition($tableName);
         $tableInfo['tableComment']        = $this->tableInfo->getTableComment($tableName); //字段注释
         $tableInfo['isLockDefinition']    = $this->tableInfo->isLockDefinition($tableName);
         $tableInfo['tableName']           = $tableName;
@@ -90,47 +95,37 @@ class Cgf
 
 
         //去表前缀
-        $tableName       = str_replace($prefix, '', $tableName);
-        $this->tableName = $tableName;
+//        $tableName       = str_replace($prefix, '', $tableName);
+//        $this->tableName = $tableName;
 
 
         //加载生成的定义配置的文件
-        $this->definition = new Definition($tableName, $savePath);
+        $this->definition = new Definition($tableName, $savePath,$module);
         //var_dump($this->definition->list);
 
 
-        //设置表单组件实现库
-        if ($form == 'bootstrap') {
-            $form = new Bootstrap();
-        } elseif ($form == 'layui') {
-            $form = new Layui();
-        }
-        $this->form = $form;
 
 
         if ($framework == 'thinkphp') {
             //$framework = new Think();
             $this->framework = $framework;
-            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition);
+            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition,$form);
             $this->validate = new ThinkphpValidate($this->definition);
 
         } elseif ($framework == 'laravel') {
             //$framework = new laravel();
             $this->framework = $framework;
-            $this->template =  new \Cgf\Template\LaravelTemplate($this->definition);
+            $this->template =  new \Cgf\Template\LaravelTemplate($this->definition,$form);
             $this->validate = new LaravelValidate();
         } else {
             $this->framework = $framework;
-            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition);
+            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition,$form);
             $this->validate = new ThinkphpValidate();
         }
 
     }
 
-    function setForm(Form $form)
-    {
-        $this->form = $form;
-    }
+
 
     function setValidate(Validate $validate)
     {
@@ -315,7 +310,7 @@ class Cgf
     }
 
 
-    function getAllColumnDefinition()
+    function getTableDefinition()
     {
         return $this->definition;
     }
@@ -342,90 +337,6 @@ class Cgf
         return $field;
     }
 
-    function generateSearch()
-    {
-
-        $definition = $this->definition->search;
-
-        $htmlSearch = "";
-        foreach ($definition as $k => $v) {
-            $htmlInput = $this->form->generate($k, $v);
-            //var_dump($htmlInput);
-            $htmlSearch .= $this->form->generateSearchInput($htmlInput, $v);
-            //var_dump($htmlSearch);exit;
-
-
-            //$htmlSearch .= str_replace(array_keys($arrAssign),array_values($arrAssign),$htmlTpl);
-            //var_dump($html);
-            //exit;
-
-
-            //echo $r;exit;
-        }
-        //echo $htmlSearch;exit('x2');
-        return $htmlSearch;
-
-
-    }
-
-    function generateAdd($isEdit = false)
-    {
-        if ($isEdit) {
-            $definition = $this->definition->edit;
-        } else {
-            $definition = $this->definition->add;
-        }
-
-        $definition = $this->definition->edit;
-//var_dump($definition);exit;
-        $html = "";
-        foreach ($definition as $k => $v) {
-            $htmlInput = $this->form->generate($k, $v);
-            //var_dump($htmlInput);exit;
-            $html .= $this->form->generateAddInput($htmlInput, $v);
-        }
-        return $html;
-    }
-
-    /*    function generateEdit()
-        {
-            $definition = $this->definition->edit;
-
-            $html = "";
-            foreach ($definition as $k => $v) {
-                $htmlInput = $this->form->generate($k, $v);
-                $html .= $this->form->generateAddInput($htmlInput, $v);
-            }
-            return $html;
-        }*/
-
-    function generateEdit_old()
-    {
-        $html         = "";
-        $generateForm = new generateForm();
-        $definition   = $this->definition['edit'];
-        foreach ($definition as $k => $v) {
-            $row         = [];
-            $row['html'] = $generateForm->generate($k, $v);
-            $row['tips'] = "";
-            $row['zh']   = "";
-            $row['name'] = "";
-        }
-        echo $html;
-        exit;
-    }
-
-    function generateForm($tableName)
-    {
-
-        $definition = $this->definition;
-
-    }
-
-    function getAllColumnOptions()
-    {
-        return $this->definition->getAllColumnOptions();
-    }
 
     function staticGetOptionText($tableName, $value)
     {
@@ -618,7 +529,7 @@ class Cgf
         $functionList = $this->generateFieldsFunction();
 
         //4.处理showText，一般用于枚举类数字转为中文显示
-        $options         = $this->getAllColumnOptions();
+        $options         = $this->definition->getAllColumnOptions();
         $allListShowText = $this->definition->getAllListShowText();
         /*$allOptions = [];
         foreach ($allListShowText as $column=>$showText){

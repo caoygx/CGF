@@ -15,7 +15,7 @@ final class CommentParser
     const LISTS = 2; //0010
     const SEARCH = 1; //0001
 
-    public $defaultShowAllColumn=true;
+    public $defaultShowAllColumn = true;
 
     //获取字段类型及长度
     public static function getColumnType($type)
@@ -43,21 +43,19 @@ final class CommentParser
     }
 
 
-
-
-
-    public static function getColumnAttribute($columnInfo){
+    public static function getColumnAttribute($columnInfo)
+    {
         $attribute = [];
         $attribute = self::getAttributeByColumnDefinition($columnInfo);
 
 
-        if(!empty($columnInfo['COLUMN_COMMENT'])){
+        if (!empty($columnInfo['COLUMN_COMMENT'])) {
             $commentAttribute = self::parseComment($columnInfo['COLUMN_COMMENT']);
-            return array_merge($attribute,$commentAttribute);
-        }elseif(self::defaultShowAllColumn){
-            $comment=$columnInfo['COLUMN_NAME']."|1111";
+            return array_merge($attribute, $commentAttribute);
+        } elseif (self::defaultShowAllColumn) {
+            $comment          = $columnInfo['COLUMN_NAME'] . "|1111";
             $commentAttribute = self::parseComment($comment);
-            return array_merge($attribute,$commentAttribute);
+            return array_merge($attribute, $commentAttribute);
         }
 
         return $attribute;
@@ -65,13 +63,14 @@ final class CommentParser
     }
 
 
-    public static function getAttributeByColumnDefinition($columnInfo){
+    public static function getAttributeByColumnDefinition($columnInfo)
+    {
 
-        $autoHiddenPrimaryKey = true;
-        $inputAttribute = [];
+        $autoHiddenPrimaryKey   = true;
+        $inputAttribute         = [];
         $inputAttribute['name'] = $columnInfo['COLUMN_NAME'];
-        $type = strtoupper($columnInfo['DATA_TYPE']);
-        if ($columnInfo['COLUMN_KEY'] == 'PRI' && $autoHiddenPrimaryKey ){ //主键设为隐藏
+        $type                   = strtoupper($columnInfo['DATA_TYPE']);
+        if ($columnInfo['COLUMN_KEY'] == 'PRI' && $autoHiddenPrimaryKey) { //主键设为隐藏
             $inputAttribute['type'] = "hidden";
             $inputAttribute['size'] = 10;
         } elseif (in_array($type, ["TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"])) { //数字类型
@@ -86,11 +85,11 @@ final class CommentParser
             $inputAttribute['size'] = 30;
             if ($type == "varchar" && $columnInfo['size'] > 255) { //大文本域
                 $inputAttribute['type'] = "textarea";
-                $inputAttribute['row'] = 10;
+                $inputAttribute['row']  = 10;
             }
         } elseif (in_array($type, ["BLOB", "TEXT", "MEDIUMBLOB", "MEDIUMTEXT", "LONGBLOB", "LONGTEXT"])) {
             $inputAttribute['type'] = "textarea";
-            $inputAttribute['row'] = 10;
+            $inputAttribute['row']  = 10;
         } else {
             $inputAttribute['type'] = "text";
             $inputAttribute['size'] = 30;
@@ -130,7 +129,8 @@ final class CommentParser
 
 
     /**
-     * 解析注释获取name和选项
+     * 解析字段注释
+     *
      * 格式说明：
      * 以 |-，之类的做分隔
      * 注释标题 - htm控件类型 - 提示 | 展现页面 | 校验类型 | 选项 | 自动完成
@@ -172,12 +172,12 @@ final class CommentParser
     public static function parseComment($comment)
     {
         //先提取正则，避免正则里的特殊符号污染后面处理
-        $reg = '/<<(.+)>>/';
+        $reg         = '/<<(.+)>>/';
         $validateReg = '';
         preg_match($reg, $comment, $match);
         if (!empty($match[1])) {
             $validateReg = $match[1];
-            $comment = preg_replace($reg, 'reg', $comment);
+            $comment     = preg_replace($reg, 'reg', $comment);
         }
 
         //$comment = '状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中';
@@ -190,29 +190,147 @@ final class CommentParser
         //array_walk($arr,$unction (&$v){ $v = trim($v); });
         $c = count($arr); //parseVarFunction
 
-        $showPage='';
+        $ret = [];
+
+        $ret['showPage']  = '';//显示页
+        $ret['checkType'] = ''; //校验类型
+        $ret['options']   = ''; //选项
+        $ret['function']  = ''; //函数
+
+
+        $ret['zh']   = '';
+        $ret['type'] = '';
+        $ret['tips'] = '';
+        $ret['flag'] = '';
+
+        $ret['arrShowPages'] = [];
+
+        $ret['arrRules'] = '';
+
+        $ret['rawOption'] = '';
+
+
+        $ret['validation'] = ''; //防止未定义报错
+        $ret['size'] = ''; //防止未定义报错
+        $showPage          = '';
         switch (true) {
             //状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中 | implode=",",###
             case ($c >= 5):
-                $function = $arr[4];
+                $ret['function'] = $arr[4];
 
             //状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中
             case ($c >= 4):
                 $options = $arr[3];
 
+                //选项分析
+
+                if (!empty($options)) {
+                    $ret['rawOption'] = $options; //原始option值
+
+                    if (strpos($options, 'function') !== false) {
+                        $func = explode('=', $options)[1];
+                        /*$r = $func();
+                        $options = [];
+                        foreach ($r as $k => $v) {
+                            $options[$v['id']] = $v['title'];
+                        }*/
+                        $options = ['function' => $func];
+                        //var_dump($options);
+                        //exit('x');
+                    } else {
+                        $arrOptions = [];
+                        $items      = explode(",", $options);
+                        $options    = [];
+                        foreach ($items as $item) {
+                            list($value, $text) = explode(':', $item);
+                            $value              = trim($value);
+                            $text               = trim($text);
+                            $arrOptions[$value] = "$text";
+                        }
+                        $options = $arrOptions;
+                    }
+                    $ret['options'] = $options;
+                }
+
+
             //状态-select-禁用则不能访问 | 7 | require
             case ($c >= 3):
                 $checkType = $arr[2];
+                //验证规则分析
+                if (!empty($checkType)) {
+                    $arrRules = [];
+                    $allRules = explode("-", $checkType);
+                    foreach ($allRules as $k => $v) {
+                        $ruleInfo     = explode(':', $v);
+                        $temp         = [];
+                        $temp['type'] = $ruleInfo[0];
+                        if ($ruleInfo[0] == 'reg') {
+                            $temp['reg'] = $validateReg;
+                        }
+
+                        if ($ruleInfo[1]) {
+                            $temp['msg'] = $ruleInfo[1];
+                        }
+                        $arrRules[] = $temp;
+                    }
+                }
 
             //状态-select-禁用则不能访问 | 7
             case ($c >= 2):
                 $showPage = trim($arr[1]);
-            //if (!is_numeric($showPage)) E('显示页面属性必须是数字');
+                //if (!is_numeric($showPage)) E('显示页面属性必须是数字');
+
+                $allModule = explode('-', $showPage);
+                if (count($allModule) == 3) {
+                    $admin = $allModule[0];
+                    $user  = $allModule[1];
+                    $home  = $allModule[2];
+                    //var_dump($allModule,$admin,$user);
+                } elseif (count($allModule) == 2) {
+                    $admin = $allModule[0];
+                    $user  = $allModule[1];
+                    $home  = $admin;
+                } else {
+                    $admin = $allModule[0];
+                    $user  = $admin;
+                    $home  = $admin;
+                }
+
+                $arrShowPages          = [];
+                $arrShowPages['admin'] = self::getShowPage($admin, 'admin');
+                $arrShowPages['user']  = self::getShowPage($user, 'user');
+                $arrShowPages['home']  = self::getShowPage($home, 'home');
+
+                $ret['arrShowPages'] = $arrShowPages;
 
 
             //状态-select-禁用则不能访问
             case ($c >= 1) :
                 $title = trim($arr[0]);
+
+                $arrTitle = explode("-", $title);
+                $c        = count($arrTitle);
+                switch ($c) {
+                    //状态-select-禁用则不能访问
+                    case ($c >= 4):
+                        $flag = $arrTitle[3];
+                        $ret['flag'] = $flag;
+
+                    //状态-select-禁用则不能访问
+                    case ($c >= 3):
+                        $tips = $arrTitle[2];
+                        $ret['tips'] = $tips;
+
+                    //状态-select
+                    case ($c >= 2):
+                        $type = $arrTitle[1];
+                        $ret['type'] = $type;
+
+                    //状态
+                    case ($c >= 1) :
+                        $zh = $arrTitle[0];
+                        $ret['zh'] = $zh;
+                }
 
         }
 
@@ -221,27 +339,6 @@ final class CommentParser
                var_dump($checkType);
                var_dump($options);*/
 
-        $arrTitle = explode("-", $title);
-        $c = count($arrTitle);
-        switch ($c) {
-            //状态-select-禁用则不能访问
-            case ($c >= 4):
-                $flag = $arrTitle[3];
-
-            //状态-select-禁用则不能访问
-            case ($c >= 3):
-                $tips = $arrTitle[2];
-
-            //状态-select
-            case ($c >= 2):
-                $type = $arrTitle[1];
-
-            //状态
-            case ($c >= 1) :
-                $zh = $arrTitle[0];
-
-
-        }
 
         /* var_dump($name);
          var_dump($htmlType);
@@ -251,89 +348,23 @@ final class CommentParser
         //显示页面分析
 
 
-        $allModule = explode('-', $showPage);
-        if (count($allModule) == 3) {
-            $admin = $allModule[0];
-            $user = $allModule[1];
-            $home = $allModule[2];
-            //var_dump($allModule,$admin,$user);
-        } elseif (count($allModule) == 2) {
-            $admin = $allModule[0];
-            $user = $allModule[1];
-            $home = $admin;
-        } else {
-            $admin = $allModule[0];
-            $user = $admin;
-            $home = $admin;
-        }
-
-
-        $arrShowPages = [];
-        $arrShowPages['admin'] = self::getShowPage($admin, 'admin');
-        $arrShowPages['user'] = self::getShowPage($user, 'user');
-        $arrShowPages['home'] = self::getShowPage($home, 'home');
-
         //echo $comment;
         //var_dump($arrShowPages);exit;
 
-        //选项分析
-        $options=[];
-        $rawOption = $options; //原始option值
-        if (!empty($options)) {
-            if (strpos($options, 'function') !== false) {
-                $func = explode('=', $options)[1];
-                /*$r = $func();
-                $options = [];
-                foreach ($r as $k => $v) {
-                    $options[$v['id']] = $v['title'];
-                }*/
-                $options = ['function'=>$func];
-                //var_dump($options);
-                //exit('x');
-            } else {
-                $arrOptions = [];
-                $items = explode(",", $options);
-                $options = [];
-                foreach ($items as $item) {
-                    list($value, $text) = explode(':', $item);
-                    $value = trim($value);
-                    $text = trim($text);
-                    $arrOptions[$value] = "$text";
-                }
-                $options = $arrOptions;
-            }
-        }
 
-        //验证规则分析
-        if (!empty($checkType)) {
-            $arrRules = [];
-            $allRules = explode("-", $checkType);
-            foreach ($allRules as $k => $v) {
-                $ruleInfo = explode(':', $v);
-                $temp = [];
-                $temp['type'] = $ruleInfo[0];
-                if ($ruleInfo[0] == 'reg') {
-                    $temp['reg'] = $validateReg;
-                }
 
-                if ($ruleInfo[1]) {
-                    $temp['msg'] = $ruleInfo[1];
-                }
-                $arrRules[] = $temp;
-            }
 
-        }
 
 
         //$ret['zh']
-        $ret = compact('zh', 'type', 'tips', 'flag', 'showPage', 'arrShowPages', 'checkType', 'arrRules', 'options', 'rawOption');
+        //$ret = compact('zh', 'type', 'tips', 'flag', 'showPage', 'arrShowPages', 'checkType', 'arrRules', 'options', 'rawOption');
 
-        if(!empty($function)){
-            $arrFunction = explode('=',$function); //处理 tpl_function=img()格式定义
+        if (!empty($function)) {
+            $arrFunction = explode('=', $function); //处理 tpl_function=img()格式定义
 
-            if(!empty($arrFunction[1])){
+            if (!empty($arrFunction[1])) {
                 $ret[$arrFunction[0]] = $arrFunction[1];
-            }else{ //默认格式
+            } else { //默认格式
                 //$$functionKey = $function;
                 $ret['function'] = $function;
             }
@@ -342,12 +373,13 @@ final class CommentParser
     }
 
 
-    public static function parseTableComment($comment){
+    public static function parseTableComment($comment)
+    {
         //$comment="问题反馈|xx|reply:回复";
 
-        $ret=[];
+        $ret = [];
 
-        $pageButton=[];
+        $pageButton = [];
 
         $arr = explode("|", $comment);
         $arr = array_map('trim', $arr);
@@ -360,13 +392,13 @@ final class CommentParser
 
             //表名 | lock | edit:编辑:id,reply:回复:id | create_time-desc | export-showMenu
             case ($c >= 5):
-                $pageButton = $arr[4];
-                $ret['pageButton'] = explode('-',$pageButton); //列表页面按钮
+                $pageButton        = $arr[4];
+                $ret['pageButton'] = explode('-', $pageButton); //列表页面按钮
 
             //表名 | lock | edit:编辑:id,reply:回复:id | create_time-desc
             case ($c >= 4):
-                $sort = $arr[3];
-                $ret['sort'] = explode('-',$sort); //排序 ['create_time','desc']
+                $sort        = $arr[3];
+                $ret['sort'] = explode('-', $sort); //排序 ['create_time','desc']
 
             //表名 | lock | edit:编辑:id,reply:回复:id
             case ($c >= 3):
@@ -388,7 +420,6 @@ final class CommentParser
 
 
     }
-
 
 
 }

@@ -5,7 +5,7 @@ use Cgf\Form;
 
 class Bootstrap extends Form {
     //public $tplDir="";
-    public $tplDir = __DIR__."/tplBootstrap";
+    public $tplDir = __DIR__."/Bootstrap";
     function __construct()
     {
 

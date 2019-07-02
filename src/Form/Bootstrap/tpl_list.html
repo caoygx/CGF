@@ -1,0 +1,70 @@
+
+
+
+<div class="row-fluid sortable">
+    <div class="box span12">
+        <div data-original-title="" class="box-header well"><!-- <i class="icon-user"></i> <a href="add" class=""></a>{$pageTitle}--></div>
+        <div class="box-content">
+            <form method='get' action="__SELF__"  class="form-inline">
+                {$html_search}
+		      <button type="submit" class="btn btn-primary">搜索</button>
+		    </form>
+            <br />
+            <php>  $query = strstr($_SERVER["REQUEST_URI"],'?');    </php>
+
+            <php>if({$f_add}==1){</php>
+            <a href="__CONTROLLER__/add" type="button" class="btn btn-warning">添加</a>
+            <php>}</php>
+
+
+            <php>if({$f_export}==1){</php>
+            <a href="__CONTROLLER__/exportExcel<?=$query?>" type="button" class="btn btn-warning">导出</a>
+            <php>}</php>
+
+
+           <!-- show="id:编号|8%,title:名称:edit,create_time|toDate='y-m-d':创建时间,status|getStatus2:状态,{$fields}"-->
+            <html:list id="checkList" name="vo" style="table table-striped table-bordered bootstrap-datatable datatable" checkbox="true" action="true"  datasource="list" show="{$f_list}" actionlist="{$f_action}"/>
+            <div>
+                <php>if({$f_batchForbidden}==1){</php>
+                <a href="javascript:;" onclick="del();" class="btn btn-info"> 批量禁用</a>
+                <php>}</php>
+
+                <php>if({$f_batchDelete}==1){</php>
+                <a href="javascript:;" onclick="foreverdel();" class="btn btn-danger"> 批量删除</a>
+                <php>}</php>
+            </div>
+            <div class="container text-center">
+                {$page}
+                <div style="margin-top:10px;">跳转到<input type="text" style="width: 100px;" id="txt_page" name="txt_page" >页 <input id="btn_jump" type="button" value="跳转"></div>
+                </div>
+ 
+        </div>
+    </div>
+
+</div>
+
+<script src="__PUBLIC__/common/{$js_name}.js"></script>
+
+<script>
+    <php>
+        $params = input('get.');
+        unset($params['p']);
+        $params = http_build_query($params);
+    </php>
+
+        $(function () {
+            console.log(URL);
+
+            $('#btn_jump').click(function () {
+                goPage();
+            });
+            function goPage() {
+                var params = '{$params}';
+                var url = CONTROLLER+"/index?"+params;
+                url += "&p="+$('#txt_page').val();
+                window.location.href = url;
+
+            }
+        });
+
+</script>

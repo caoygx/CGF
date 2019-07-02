@@ -11,7 +11,7 @@ class SqlToCgfDefinition
     public $definitionDir = "definition";
     public $originalDefinition = [];//源定义配置
     public $compiledDefinition = [];//编译后的配置
-    public $modules = ['common', 'admin','user','home'];//,'user','home','api'
+    public $modules = ['common', 'admin', 'user', 'home'];//,'user','home','api'
     public $currentModule = 'common';
     public $tableName = "";
 
@@ -41,7 +41,7 @@ class SqlToCgfDefinition
 
     public $tablePrefix = "pm_";
     public $allModuleDefinition = [];
-    public $enableModule=false;
+    public $enableModule = false;
     public $tableInfo = [];
 
     public $savePath;
@@ -61,14 +61,14 @@ class SqlToCgfDefinition
      * @param string $module 模块
      * @param TableInfoInterface|null $tableInfoHandle 表信息解析器
      */
-    function __construct( $tableInfo,$module = "common",$savePath)
+    function __construct($tableInfo, $module = "common", $savePath)
     {
-        $this->currentModule = $module;
-        $this->tableName = $tableInfo['tableName'];
-        $this->tableInfo = $tableInfo;
-        $this->saveDefinitionDir = $savePath."";
-        if(!file_exists($this->saveDefinitionDir)){
-            mkdir($this->saveDefinitionDir,0777,true);
+        $this->currentModule     = $module;
+        $this->tableName         = $tableInfo['tableName'];
+        $this->tableInfo         = $tableInfo;
+        $this->saveDefinitionDir = $savePath . "";
+        if (!file_exists($this->saveDefinitionDir)) {
+            mkdir($this->saveDefinitionDir, 0777, true);
         }
 
 
@@ -78,11 +78,12 @@ class SqlToCgfDefinition
     }
 
     //获取表所有字段定义
-    function getTableAllColumnDefinition(){
+    function getTableAllColumnDefinition()
+    {
 
         $allColumn = $this->tableInfo['allColumnDefinition'];
 
-        foreach ($allColumn as $k =>$column){
+        foreach ($allColumn as $k => $column) {
             $this->allColumnAttribute[$column['COLUMN_NAME']] = CommentParser::getColumnAttribute($column);
         }
 
@@ -95,10 +96,11 @@ class SqlToCgfDefinition
     /**
      * 获取表注释定义
      */
-    function getTableInfo(){
+    function getTableInfo()
+    {
         $comment = $this->tableInfo['tableComment'];
         //表注释定义解析
-        $arrComment =  CommentParser::parseTableComment($comment);
+        $arrComment         = CommentParser::parseTableComment($comment);
         $arrComment['name'] = $this->tableName;
         //var_dump($arrComment);exit('x');
         return $arrComment;
@@ -151,11 +153,12 @@ class SqlToCgfDefinition
     /**
      * 展开生成所有模块和页面定义
      */
-    function unfoldAllModulePage($moduleName){
+    function unfoldAllModulePage($moduleName)
+    {
         foreach ($this->allColumnAttribute as $k => $columnAttribute) {
-            if(!empty($columnAttribute['arrShowPages']) && is_array($columnAttribute['arrShowPages'])){
-                foreach ($columnAttribute['arrShowPages'] as $moduleName => $pages){
-                    $this->toFullDefinition($moduleName,$pages,$columnAttribute);
+            if (!empty($columnAttribute['arrShowPages']) && is_array($columnAttribute['arrShowPages'])) {
+                foreach ($columnAttribute['arrShowPages'] as $moduleName => $pages) {
+                    $this->toFullDefinition($moduleName, $pages, $columnAttribute);
                 }
 
             }
@@ -177,30 +180,32 @@ class SqlToCgfDefinition
      * 获取指定模块的cgf定义
      * @param $moduleName
      */
-    function getModuleCgfDefinition($moduleName){
+    function getModuleCgfDefinition($moduleName)
+    {
 
-        $cgfDefinition = [];
+        $cgfDefinition           = [];
+
         foreach ($this->allColumnAttribute as $k => $columnAttribute) {
 
 
             //var_dump($columnAttribute);
-            if(!empty($columnAttribute['arrShowPages']) && is_array($columnAttribute['arrShowPages'])){
+            if (!empty($columnAttribute['arrShowPages']) && is_array($columnAttribute['arrShowPages'])) {
                 //去除字段页面定义
                 $showPages = $columnAttribute['arrShowPages'];
                 unset($columnAttribute['arrShowPages']);
             }
 
-            if(!empty($columnAttribute['options'])){ //列表页自动将有options字段转成show_text
-                $columnAttribute['show_text'] = $columnAttribute['name']."_text";
+            if (!empty($columnAttribute['options'])) { //列表页自动将有options字段转成show_text
+                $columnAttribute['show_text'] = $columnAttribute['name'] . "_text";
             }
 
             //生成base定义，并将其放入数组开头
             $baseCgfDefinition['base'][$columnAttribute['name']] = $columnAttribute;
 
 
-            if(!empty($showPages)){
+            if (!empty($showPages)) {
                 //生成增改列表搜定义
-                foreach ($showPages[$moduleName] as $pages){
+                foreach ($showPages[$moduleName] as $pages) {
                     //所有页面字段都是完整的定义
                     //$cgfDefinition[$pages][$columnAttribute['name']] = $columnAttribute;
 
@@ -210,8 +215,13 @@ class SqlToCgfDefinition
             }
 
         }
+        //$cgfDefinition['base']   = [];
+        $cgfDefinition['list']   = [];
+        $cgfDefinition['search'] = [];
+        $cgfDefinition['add']    = [];
+        $cgfDefinition['edit']   = [];
         //exit;
-        $cgfDefinition = array_merge($baseCgfDefinition,$cgfDefinition);
+        $cgfDefinition = array_merge($baseCgfDefinition, $cgfDefinition);
         return $cgfDefinition;
 
     }
@@ -262,10 +272,11 @@ class SqlToCgfDefinition
      * @return array
      *
      */
-    function toFullDefinition($moduleName,$pages,$attribute){
+    function toFullDefinition($moduleName, $pages, $attribute)
+    {
 
         unset($attribute['arrShowPages']);;
-        foreach ($pages as $page){
+        foreach ($pages as $page) {
             $this->allModuleDefinition[$moduleName][$page][$attribute['name']] = $attribute;
         }
     }
@@ -274,13 +285,13 @@ class SqlToCgfDefinition
      * generate definition file
      * @param string $moduleName
      */
-    function generateCgfDefinitionFile($moduleName="admin"){
-        if($this->enableModule){
-            foreach ($this->modules as $v){
+    function generateCgfDefinitionFile($moduleName = "admin")
+    {
+        if ($this->enableModule) {
+            foreach ($this->modules as $v) {
                 $this->cgfDefinition[$v] = $this->getModuleCgfDefinition($moduleName);
             }
-
-        }else{
+        } else {
             $this->cgfDefinition = $this->getModuleCgfDefinition($moduleName);
         }
 
@@ -298,50 +309,56 @@ class SqlToCgfDefinition
         //$this->generateBase();
         //$arrStr = var_export($this->allModuleDefinition,1);
 
-        $filePath = $this->saveDefinitionDir."/".str_replace($this->tablePrefix,'',$this->tableName).".php";
+        $filePath = $this->saveDefinitionDir . "/" . str_replace($this->tablePrefix, '', $this->tableName) . ".php";
 
-        if(file_exists($filePath)){
+        if (file_exists($filePath)) {
             $lockDefinitionFile = $this->tableInfo['isLockDefinition'];
-            if($lockDefinitionFile){
+            if ($lockDefinitionFile) {
                 return false;
             }
-            if(!$this->forcedWriteFile){
+            if (!$this->forcedWriteFile) {
                 return false;
             }
         }
-        $arrStr = var_export($this->cgfDefinition,1);
-        $content = "<?php \n return ".$arrStr.";";
-        file_put_contents($filePath,$content);
+        $arrStr  = var_export($this->cgfDefinition, 1);
+        $content = "<?php \n return " . $arrStr . ";";
+        file_put_contents($filePath, $content);
     }
 
     //生成基本字段
-    function generateBase(){
+    function generateBase()
+    {
         $this->cgfDefinition['base'] = $this->allColumnAttribute;
     }
 
     //生成列表选项
-    function generateList(){
+    function generateList()
+    {
 
         $this->cgfDefinition['list'] = [];
     }
 
     //生成搜索选项
-    function generateSearch(){
+    function generateSearch()
+    {
         $this->cgfDefinition['search'] = [];
     }
 
     //生成添加选项
-    function generateAdd(){
+    function generateAdd()
+    {
         $this->cgfDefinition['add'] = [];
     }
 
     //生成编辑选项
-    function generateEdit(){
+    function generateEdit()
+    {
         $this->cgfDefinition['edit'] = [];
     }
 
     //生成函数
-    function getHtmlType($parser,$column){
+    function getHtmlType($parser, $column)
+    {
         return $parser->getColumnAttribute($column);
     }
 

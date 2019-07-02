@@ -78,7 +78,7 @@ class MysqlTableInfo implements TableInfoInterface
      * @param $tableName
      * @return array
      */
-    public function getAllColumnDefinition($tableName)
+    public function getTableDefinition($tableName)
     {
         $dbType = $this->dbConf['DB_TYPE'];
         if ($dbType == 'mysql') {

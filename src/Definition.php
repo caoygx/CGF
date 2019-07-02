@@ -12,16 +12,17 @@ class Definition
     public $savePath;
     public $originalDefinition = [];//源定义配置
     public $compiledDefinition = [];//编译后的配置
-    public $modules = ['common', 'admin'];//,'user','home','api'
+    public $availableModule = [];//,'user','home','api'
     public $currentModule = 'common';
     public $tableName;
 
     function __construct($tableName, $savePath,$module = "common")
     {
-        $this->savePath = $savePath.'';
-        $this->tableName = $tableName;
+        $this->savePath           = $savePath.'';
+        $this->tableName          = $tableName;
         $this->originalDefinition = $this->getOriginalDefinition();
-        $this->currentModule = $module;
+        $this->availableModule    = Cgf::$config['availableModule'];
+        $this->currentModule      = $module;
         $this->compile();
     }
 
@@ -36,23 +37,25 @@ class Definition
         $base = $this->originalDefinition['base'];
         $d = [];
         //所有定义合并，后面覆盖前面。按base,list,search,add,edit顺序
+
         $d['all'] = $this->mergeAllPageProperty($base, $this->originalDefinition['list']);
         $d['add'] = $this->mergeProperty($base, $this->originalDefinition['add']);
         $d['edit'] = $this->mergeProperty($base, $this->originalDefinition['edit']);
         $d['list'] = $this->mergeProperty($base, $this->originalDefinition['list']);
+        //var_dump($d['list']);exit;
         $d['search'] = $this->mergeProperty($base, $this->originalDefinition['search']);
 
         //表自身定义信息编译
         $d['tableInfo'] = $this->compileTableInfo($this->originalDefinition['tableInfo']);
 
         //编译出各模块定义
-        foreach ($this->modules as $k => $module) {
+        foreach ($this->availableModule as $k => $module) {
             $this->compiledDefinition[$module] = $d;
         }
         //var_dump($this->compiledDefinition);exit;
 
         //编译各模块特殊定义
-        foreach ($this->modules as $k => $module) {
+        foreach ($this->availableModule as $k => $module) {
             if (!empty($this->originalDefinition['module'][$module])) {
                 $moduleDefinition = [];
                 $moduleDefinition = $this->originalDefinition['module'][$module];
@@ -68,7 +71,7 @@ class Definition
     }
 
     /**
-     * 递归合并数组
+     * 递归合并数组，页面没有特殊定义，则返回base定义
      * $a["zh"]=>"标题1";
      * $b["zh"]=>"替换的标题";
      * mergeProperty($a,$b) 并没有达到想要的["zh"]=>"替换的标题",而是变成合并["zh"=>[标题1,"替换的标题"]]
@@ -78,7 +81,12 @@ class Definition
      */
     function mergeProperty($base, $pageDefinition)
     {
-        if(is_array($pageDefinition) && !empty($pageDefinition))
+        if(empty($pageDefinition) || !is_array($pageDefinition) ){
+
+            //var_dump($pageDefinition,$base);exit;
+            return $base;
+        }
+
         foreach ($pageDefinition as $column => $property) {
             if (isset($base[$column])) {
                 $pageDefinition[$column] = array_merge($base[$column], $property); //array_merge_recursive 用递归则无法重写base的定义
@@ -117,6 +125,7 @@ class Definition
 
     function getPageDefinition($page)
     {
+        //var_dump($this->compiledDefinition[$this->currentModule]);exit;
         return $this->compiledDefinition[$this->currentModule][$page];
     }
 
@@ -221,12 +230,19 @@ class Definition
         return $tableInfo;
     }
 
-    function getAllColumnDefinition()
+    function getTableDefinition()
     {
+        //var_dump($this->compiledDefinition[$this->currentModule]);exit;
         return $this->compiledDefinition[$this->currentModule]['tableInfo'];
     }
 
+
     function isLockDefinition(){
-        return $this->compiledDefinition[$this->currentModule]['tableInfo']['property'] == 'lock';
+        if(empty($this->compiledDefinition[$this->currentModule]['tableInfo']['property'])){
+            return false;
+        }else{
+            return $this->compiledDefinition[$this->currentModule]['tableInfo']['property'] == 'lock';
+        }
+
     }
 }

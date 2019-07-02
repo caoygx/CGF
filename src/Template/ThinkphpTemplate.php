@@ -1,13 +1,35 @@
 <?php
+
 namespace Cgf\Template;
+
 use Cgf\Template;
+use Cgf\Form\Bootstrap;
+use Cgf\Cgf;
+use think\Exception;
 
-class ThinkphpTemplate extends Template {
+class ThinkphpTemplate extends Template
+{
 
-    public $definition;
-    function __construct($definition)
+
+
+    function __construct($definition, $form)
     {
         $this->definition = $definition;
+        $this->dirForm = ucfirst($form);
+
+        //设置表单组件实现库
+        if (strtolower($form) == 'bootstrap') {
+            $form = new Bootstrap();
+        } elseif (strtolower($form) == 'layui') {
+            $form = new Layui();
+        }
+        $this->objForm = $form;
+
+    }
+
+    function setObjForm(Form $objForm)
+    {
+        $this->objForm = $objForm;
     }
 
     /**
@@ -79,7 +101,6 @@ class ThinkphpTemplate extends Template {
     function generateListTitle()
     {
         $show = '';
-        //var_dump($this->definition->list);exit;
         foreach ($this->definition->list as $k => $v) {
             //show="id:ID,openid:用户openid,act_goods_id:商品id,act_issue_id:期号,act_goods_name:商品名称,prize_price:奖品市场价,prize_level:奖品等级,prize_goods_id:中奖商品id,prize_goods_name:奖品商品名,prize_type:奖品类型,draw_state:首页显示,prize_state:中奖状态,trans_state:奖品发放,trans_kuaidi_num:物流单号,create_t:创建时间,modify_t:修改时间,auc_count:总竞拍次数"
 
@@ -135,6 +156,7 @@ class ThinkphpTemplate extends Template {
 
             $show .= "{$k}$tpl_function:{$v['zh']}:" . $js_function . ":sort,";
         }
+        $show=implode(',',array_filter(explode(',',$show)));
         //echo $show;exit;
         return $show;
 
@@ -150,10 +172,9 @@ class ThinkphpTemplate extends Template {
     function generateListsTemplate()
     {
         $arrTplParameter = [];
+        $fields          = $this->generateListTitle();
+        //echo($fields);exit();
 
-        $fields = $this->generateListTitle();
-
-        //$fields = $this->createListFields();
         $arrTplParameter['f_list'] = $fields;
         //$this->f_list = $fields;
 
@@ -165,32 +186,29 @@ class ThinkphpTemplate extends Template {
         $arrTplParameter['f_batchDelete']    = 0; //批量删除按钮
         $arrTplParameter['f_showMenu']       = 0; //在菜单中显示
 
-        $f_action   = $this->definition->getTableDefinition()['action'];
-        $pageButton = $this->definition->getTableDefinition()['pageButton'];
 
-
-        if (array_search('export', $pageButton) !== false) $arrTplParameter['f_export'] = 1;
-        if (array_search('add', $pageButton) !== false) $arrTplParameter['f_add'] = 1;
-        if (array_search('batchForbidden', $pageButton) !== false) $arrTplParameter['f_batchForbidden'] = 1;
-        if (array_search('batchDelete', $pageButton) !== false) $arrTplParameter['f_batchDelete'] = 1;
-
-        //action操作生成
-        if (empty($f_action)) {
-            $fieldsKey  = 'tpl_fields.' . strtolower($this->tableName);
-            $tpl_fields = C($fieldsKey);
-            if (empty($tpl_fields['f_action'])) {
-                $f_action = $tpl_fields['f_action'];
-            }
+        if (!empty($this->definition->getTableDefinition()['pageButton'])) {
+            $pageButton = $this->definition->getTableDefinition()['pageButton'];
+            if (array_search('export', $pageButton) !== false) $arrTplParameter['f_export'] = 1;
+            if (array_search('add', $pageButton) !== false) $arrTplParameter['f_add'] = 1;
+            if (array_search('batchForbidden', $pageButton) !== false) $arrTplParameter['f_batchForbidden'] = 1;
+            if (array_search('batchDelete', $pageButton) !== false) $arrTplParameter['f_batchDelete'] = 1;
         }
 
-        $arrTplParameter['f_action'] = $f_action;
 
-        /*if(empty($tpl_fields['f_action'])){
-            //$this->f_action = C('f_action');
-            $arrTplParameter['f_action'] =C('f_action');
-        }else{
-            //$this->f_action = $tpl_fields['f_action'];
-            $arrTplParameter['f_action'] =C('f_action');
+        $arrTplParameter['f_action'] = 'edit:编辑:id,foreverdel:永久删除:id';
+        //action操作生成
+        if (!empty($this->definition->getTableDefinition()['action'])) {
+            $f_action = $this->definition->getTableDefinition()['action'];
+            $arrTplParameter['f_action'] = $f_action;
+            //var_dump($f_action);
+        }
+        /*else {
+            $fieldsKey              = 'tpl_fields.' . strtolower(Cgf::$config['controllerName']);
+            $tpl_fields['f_action'] = 'edit:编辑:id,foreverdel:永久删除:id';
+            if (!empty($tpl_fields['f_action'])) {
+                $f_action = $tpl_fields['f_action'];
+            }
         }*/
 
 
@@ -199,7 +217,7 @@ class ThinkphpTemplate extends Template {
         $htmlSearch = $this->generateSearch();
 
         //配置select选项和选中值
-        $options = $this->getAllColumnOptions();
+        $options = $this->definition->getAllColumnOptions();
         foreach ($options as $column => $option) {
             $this->assign('opt_' . $column, $option);
             $this->assign($column . '_selected', I($column));
@@ -207,16 +225,19 @@ class ThinkphpTemplate extends Template {
 
         //$this->control = CONTROLLER_NAME;//
         //$this->control = '__CONTROLLER__';// 生成模板时用这个
-        $arrTplParameter['control']     = CONTROLLER_NAME;
+        $arrTplParameter['control']     = Cgf::$config['controllerName'];
         $arrTplParameter['html_search'] = $htmlSearch;
         //$this->htmlSearch = $htmlSearch;
         //$this->js_name=$this->tableName;
-        $arrTplParameter['js_name'] = $this->tableName;
+        $arrTplParameter['js_name'] = Cgf::$config['controllerName'];
         //var_dump($arrTplParameter);
 
-        $file    = APP_PATH . MODULE_NAME . "/View/Public/tpl_list" . C('TMPL_TEMPLATE_SUFFIX');
-        if(!file_exists($file)){
-            exit('no exist tpl_add');
+        //$file = Cgf::$config['parentTemplatePath'] . "/tpl_list.html";
+
+        $templateDir = dirname(__DIR__);
+        $file = $templateDir."/From/".$this->dirForm."/tpl_list.html";
+        if (!file_exists($file)) {
+            throw new Exception(" $file no exist");
         }
         $content = file_get_contents($file);
         foreach ($arrTplParameter as $k => $v) {
@@ -224,7 +245,6 @@ class ThinkphpTemplate extends Template {
         }
         $content = str_replace('$f_list', $arrTplParameter['f_list'], $content);
         $content = str_replace('$f_action', $arrTplParameter['f_action'], $content);
-        //var_dump($content);exit;
 
         if ($this->generateFile) {
             //生成模板文件到data目录下
@@ -236,10 +256,10 @@ class ThinkphpTemplate extends Template {
         } else {
 
             //直接在项目下创建模板
-            $dir = APP_PATH . MODULE_NAME . "/View/" . CONTROLLER_NAME;
+            $dir = Cgf::$config['templateSavePath'];
             if (!file_exists($dir)) mkdir($dir, 0777, true);
             $filename = $dir . "/index.html";
-            if ($this->definition->isLockDefinition($this->m->getTableName())) $this->forceWrite = false;
+            if ($this->definition->isLockDefinition(Cgf::$config['tableName'])) $this->forceWrite = false;
             if ($this->forceWrite || !file_exists($filename)) {
                 file_put_contents($filename, $content);
             }
@@ -247,6 +267,32 @@ class ThinkphpTemplate extends Template {
 
 
         }
+
+
+    }
+
+    function generateSearch()
+    {
+
+        $definition = $this->definition->search;
+
+        $htmlSearch = "";
+        foreach ($definition as $k => $v) {
+            $htmlInput = $this->objForm->generate($k, $v);
+            //var_dump($htmlInput);
+            $htmlSearch .= $this->objForm->generateSearchInput($htmlInput, $v);
+            //var_dump($htmlSearch);exit;
+
+
+            //$htmlSearch .= str_replace(array_keys($arrAssign),array_values($arrAssign),$htmlTpl);
+            //var_dump($html);
+            //exit;
+
+
+            //echo $r;exit;
+        }
+        //echo $htmlSearch;exit('x2');
+        return $htmlSearch;
 
 
     }
@@ -515,7 +561,7 @@ class ThinkphpTemplate extends Template {
         $this->toview();
     }
 
-    function generateAddTpl($isEdit=false)
+    function generateAddTpl($isEdit = false)
     {
         $htmlAdd = $this->generateAdd($isEdit);
 
@@ -535,9 +581,9 @@ class ThinkphpTemplate extends Template {
         $arrTplParameter['js_name'] = $this->tableName;
         //var_dump($arrTplParameter);
 
-        $file    = APP_PATH . MODULE_NAME . "/View/Public/tpl_add" . C('TMPL_TEMPLATE_SUFFIX');
-        if(!file_exists($file)){
-            exit('no exist tpl_add');
+        $file = APP_PATH . MODULE_NAME . "/View/Public/tpl_add" . C('TMPL_TEMPLATE_SUFFIX');
+        if (!file_exists($file)) {
+            throw new Exception("no exist tpl_add");
         }
         $content = file_get_contents($file);
 
