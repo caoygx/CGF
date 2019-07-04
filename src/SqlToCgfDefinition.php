@@ -88,7 +88,8 @@ class SqlToCgfDefinition
         }
 
 
-        //var_dump($r);exit('x');
+        var_dump($this->allColumnAttribute);
+        exit('x');
 
 
     }
@@ -183,7 +184,7 @@ class SqlToCgfDefinition
     function getModuleCgfDefinition($moduleName)
     {
 
-        $cgfDefinition           = [];
+        $cgfDefinition = [];
 
         foreach ($this->allColumnAttribute as $k => $columnAttribute) {
 

@@ -48,9 +48,9 @@ final class CommentParser
         $attribute = [];
         $attribute = self::getAttributeByColumnDefinition($columnInfo);
 
-
         if (!empty($columnInfo['COLUMN_COMMENT'])) {
             $commentAttribute = self::parseComment($columnInfo['COLUMN_COMMENT']);
+            var_dump($attribute,$commentAttribute);
             return array_merge($attribute, $commentAttribute);
         } elseif (self::defaultShowAllColumn) {
             $comment          = $columnInfo['COLUMN_NAME'] . "|1111";

@@ -105,7 +105,7 @@ CREATE TABLE `user` (
   `flag` varchar(255) NOT NULL DEFAULT '' COMMENT '标记-select|1100|require|function=flag_options()|tpl_function=img()',
   `intro` text COMMENT '用户介绍-editor|1100',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8  COMMENT='用户表|lock-birthday|编辑:id,查看用户浏览记录:id| export-showMenu';
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8  COMMENT='用户表|lock-birthday|编辑:id,查看用户浏览记录:id| add-export-showMenu';
 
 
 
@@ -120,7 +120,7 @@ CREATE TABLE `user` (
 
 2. 属性: 可选值有 lock,lock表示生成相关cgf文件后，会锁定配置文件，再次修改不会生成新配置文件。  
 
-3. 操作:  
+3. 每行记录的操作:  
     记录可以进行的操作项  
     常用有：编辑，删除。  
     写法：edit:编辑:id, edit表示js的方法名，编辑表示页面上显示的中文名，id表示参数  
@@ -129,9 +129,10 @@ CREATE TABLE `user` (
     默认排序字段-倒序  
 
 5. 页面按钮 页面上显示的按钮，用 - 分隔  
-    可选值:export,showMenu      
-          export 表示有导出功能  
-        showMenu 表示在左侧菜单显示  
+    可选值:add,export,showMenu
+          add  显示添加按钮
+          export 显示导出按钮  
+          showMenu 在左侧菜单显示  
 
 例：用户表|lock|edit:编辑:id,del:删除:id|create_time-desc|export-showMenu|function_name  
 

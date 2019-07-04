@@ -5,7 +5,7 @@
     <div class="box span12">
         <div data-original-title="" class="box-header well"><!-- <i class="icon-user"></i> <a href="add" class=""></a>{$pageTitle}--></div>
         <div class="box-content">
-            <form method='get' action="__SELF__"  class="form-inline">
+            <form method='get' action="{:url('index')}"  class="form-inline">
                 {$html_search}
 		      <button type="submit" class="btn btn-primary">搜索</button>
 		    </form>
@@ -13,12 +13,12 @@
             <php>  $query = strstr($_SERVER["REQUEST_URI"],'?');    </php>
 
             <php>if({$f_add}==1){</php>
-            <a href="__CONTROLLER__/add" type="button" class="btn btn-warning">添加</a>
+            <a href="{:url('add')}" type="button" class="btn btn-warning">添加</a>
             <php>}</php>
 
 
             <php>if({$f_export}==1){</php>
-            <a href="__CONTROLLER__/exportExcel<?=$query?>" type="button" class="btn btn-warning">导出</a>
+            <a href="{:url('exportExcel')}" type="button" class="btn btn-warning">导出</a>
             <php>}</php>
 
 

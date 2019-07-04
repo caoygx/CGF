@@ -14,7 +14,7 @@ class Bootstrap extends Form {
     function generate($name,$definition){
         $this->name = $name;
         $this->definition = $definition;
-        //var_dump($definition);exit;
+        var_dump($definition);//exit;
         /*if($name == 'id'){ //是主键,只能处理命名为id的主键
             $definition['type']='hidden';
         }else*/
@@ -73,7 +73,7 @@ class Bootstrap extends Form {
     function password(){
         $name = $this->name;
         $definition = $this->definition;
-        $html = "<input {$this->definition['validation']}  type=\"password\"  class=\"form-control\" name=\"$name\" id=\"$name\" size=\"{$definition['size']['size']}\" value=" . '"{$vo.' . $name . '}"' . " />";
+        $html = "<input {$this->definition['validation']}  type=\"password\"  class=\"form-control\" name=\"$name\" id=\"$name\" size=\"{$definition['size']}\" value=" . '"{$vo.' . $name . '}"' . " />";
         return $html;
     }
 

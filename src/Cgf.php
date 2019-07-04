@@ -29,7 +29,6 @@ class Cgf
     public static $config;
 
 
-
     public static function getDbConfigFromThinkPHP($sourceDbConfig)
     {
         $dbConfig['host']     = $sourceDbConfig['hostname'];
@@ -67,7 +66,7 @@ class Cgf
         $framework = $cgfConf['framework'];
         $validate  = $cgfConf['validate'];
         $form      = $cgfConf['form'];
-        $tableName      = $cgfConf['tableName'];
+        $tableName = $cgfConf['tableName'];
 
         $this->saveDefinitionDir = $savePath;
         if (!file_exists($this->saveDefinitionDir)) {
@@ -100,32 +99,32 @@ class Cgf
 
 
         //加载生成的定义配置的文件
-        $this->definition = new Definition($tableName, $savePath,$module);
+        $this->definition = new Definition($tableName, $savePath, $module);
         //var_dump($this->definition->list);
-
-
 
 
         if ($framework == 'thinkphp') {
             //$framework = new Think();
             $this->framework = $framework;
-            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition,$form);
-            $this->validate = new ThinkphpValidate($this->definition);
+            $this->template  = new \Cgf\Template\ThinkphpTemplate($this->definition, $form);
+            $this->validate  = new ThinkphpValidate($this->definition);
 
         } elseif ($framework == 'laravel') {
             //$framework = new laravel();
             $this->framework = $framework;
-            $this->template =  new \Cgf\Template\LaravelTemplate($this->definition,$form);
-            $this->validate = new LaravelValidate();
+            $this->template  = new \Cgf\Template\LaravelTemplate($this->definition, $form);
+            $this->validate  = new LaravelValidate();
         } else {
             $this->framework = $framework;
-            $this->template = new \Cgf\Template\ThinkphpTemplate($this->definition,$form);
-            $this->validate = new ThinkphpValidate();
+            $this->template  = new \Cgf\Template\ThinkphpTemplate($this->definition, $form);
+            $this->validate  = new ThinkphpValidate();
         }
 
     }
 
-
+    function getAllColumnOptions(){
+        return $this->definition->getAllColumnOptions();
+    }
 
     function setValidate(Validate $validate)
     {
@@ -153,8 +152,14 @@ class Cgf
     }
 
 
-    function generateListsTemplate(){
+    function generateListsTemplate()
+    {
         return $this->template->generateListsTemplate();
+    }
+
+    function generateAddTemplatel()
+    {
+        return $this->template->generateAddTemplate();
     }
 
 
