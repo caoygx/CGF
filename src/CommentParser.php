@@ -50,7 +50,7 @@ final class CommentParser
 
         if (!empty($columnInfo['COLUMN_COMMENT'])) {
             $commentAttribute = self::parseComment($columnInfo['COLUMN_COMMENT']);
-            var_dump($attribute,$commentAttribute);
+            //var_dump($attribute,$commentAttribute);
             return array_merge($attribute, $commentAttribute);
         } elseif (self::defaultShowAllColumn) {
             $comment          = $columnInfo['COLUMN_NAME'] . "|1111";
@@ -192,7 +192,7 @@ final class CommentParser
 
         $ret = [];
 
-        $ret['showPage']  = '';//显示页
+        /*$ret['showPage']  = '';//显示页
         $ret['checkType'] = ''; //校验类型
         $ret['options']   = ''; //选项
         $ret['function']  = ''; //函数
@@ -211,7 +211,11 @@ final class CommentParser
 
 
         $ret['validation'] = ''; //防止未定义报错
-        $ret['size'] = ''; //防止未定义报错
+        $ret['size'] = ''; //防止未定义报错*/
+
+        //还是不是能默认定义，因为这里type这些定义的优先级高于字段自己生成的type,会将自己生成的覆盖。
+        //比如时间类型字段，如果此处给了默认空值，即使字段自动获取类型获取到了time类型，也不会在前端生成时间选择器。因为type的值是空，而不是date
+
         $showPage          = '';
         switch (true) {
             //状态-select-禁用则不能访问 | 7 | require | 0:禁用,1:正常,2:审核中 | implode=",",###

@@ -80,18 +80,13 @@ class SqlToCgfDefinition
     //获取表所有字段定义
     function getTableAllColumnDefinition()
     {
-
         $allColumn = $this->tableInfo['allColumnDefinition'];
 
         foreach ($allColumn as $k => $column) {
             $this->allColumnAttribute[$column['COLUMN_NAME']] = CommentParser::getColumnAttribute($column);
         }
-
-
-        var_dump($this->allColumnAttribute);
-        exit('x');
-
-
+        //var_dump($this->allColumnAttribute);
+        //exit('x');
     }
 
     /**

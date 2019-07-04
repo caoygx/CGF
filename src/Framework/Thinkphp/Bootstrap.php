@@ -14,7 +14,7 @@ class Bootstrap extends Form {
     function generate($name,$definition){
         $this->name = $name;
         $this->definition = $definition;
-        var_dump($definition);//exit;
+        //var_dump($definition);//exit;
         /*if($name == 'id'){ //是主键,只能处理命名为id的主键
             $definition['type']='hidden';
         }else*/
@@ -123,7 +123,7 @@ class Bootstrap extends Form {
 
         //将属性放入数组，并组成html属性数据，再拼接成html字符串
         $htmlProps = [];
-        foreach ($definition['props'] as $k=>$v){
+        foreach ($definition as $k=>$v){
             if($k == "size"){
                 $htmlProps['size'] = $v;
             }
