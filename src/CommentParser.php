@@ -57,12 +57,18 @@ final class CommentParser
             $attribute = array_merge($attribute, $commentAttribute);
         }
 
-        dump($attribute);
+        //dump($attribute);
         return $attribute;
 
     }
 
 
+    /**
+     * 获取字段的表单属性
+     * 如 表单类型，长度
+     * @param $columnInfo
+     * @return array
+     */
     public static function getAttributeByColumnDefinition($columnInfo)
     {
 
