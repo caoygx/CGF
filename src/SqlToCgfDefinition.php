@@ -182,9 +182,32 @@ class SqlToCgfDefinition
         $cgfDefinition = [];
 
         foreach ($this->allColumnAttribute as $k => $columnAttribute) {
+            /* $columnAttribute 数据
+            array:5 [▼
+              "name" => "id"
+              "type" => "hidden"
+              "size" => 10
+              "arrShowPages" => array:3 [▼
+                "admin" => array:3 [▼
+                  0 => "edit"
+                  1 => "list"
+                  2 => "search"
+                ]
+                "user" => array:3 [▼
+                  0 => "edit"
+                  1 => "list"
+                  2 => "search"
+                ]
+                "home" => array:2 [▼
+                  0 => "edit"
+                  1 => "list"
+                ]
+              ]
+              "zh" => "标题"
+            ]
+            */
 
-
-            //var_dump($columnAttribute);
+            //dump($columnAttribute);
             if (!empty($columnAttribute['arrShowPages']) && is_array($columnAttribute['arrShowPages'])) {
                 //去除字段页面定义
                 $showPages = $columnAttribute['arrShowPages'];
@@ -212,10 +235,10 @@ class SqlToCgfDefinition
 
         }
         //$cgfDefinition['base']   = [];
-        $cgfDefinition['list']   = [];
-        $cgfDefinition['search'] = [];
-        $cgfDefinition['add']    = [];
-        $cgfDefinition['edit']   = [];
+//        $cgfDefinition['list']   = [];
+//        $cgfDefinition['search'] = [];
+//        $cgfDefinition['add']    = [];
+//        $cgfDefinition['edit']   = [];
         //exit;
         $cgfDefinition = array_merge($baseCgfDefinition, $cgfDefinition);
         return $cgfDefinition;

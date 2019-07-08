@@ -9,13 +9,13 @@
 希望大家可以一起来完善这种格式，让其变成一种标准或协议。  
 
 # 安装 install
-由于demo是基于thinkphp的，所以要下载thinkphp框架,并且将这两个目录是平级的。  
+composer require rrbrr/cgf
 
-1. 创建目录 demo,然后进入demo目录  (linux下命令：mkdir demo   cd demo)
-2. git clone https://github.com/caoygx/ThinkPHP.git
-3. git clone https://github.com/caoygx/CGF.git
-4. 创建表结构，并更改CGF/config.php的数据库配置
-5. 浏览器打开 http://localhost/CGF/
+
+
+# 使用
+参考demo写法
+
 
 
 
@@ -29,48 +29,33 @@ http://cgf.rrbrr.com/
 数据库密码    cgfrrbrr  
 
 
-# 字段注释格式说明  
-
-以 |-，之类的做分隔  
-注释标题 - htm控件类型 - 提示 |后台显示页面-用户中心-前台显示页面 | 验证类型1-验证类型2 |  选项|显示模板  
-
-## 第一部分 描述字段lable、控件类型、提示信息
-注释标题: 一般是字段的中文标题，form表单的label  
-html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的控件需要你自己来实现。  
-提示:一般是此字段的填写规范，如：允许字母或数字  
 
 
-## 第二部分 描述在哪些页面显示
-展现页面:用位表示   
-1       1          1       1  
-添加  修改    列表   搜索项  
-8       4           2      1  
-可以用每1位的10进制数相加的和表示，也可以直接用二进制表示  
-1011(二进制)  等价于 11(十进制)  
-
-例:  
-添加,修改，列表,搜索全显示 1111 = 15  
-添加,修改，列表都要显示则是  1110 = 14  
-添加，修改显示，列表不显示    1100 = 10  
-添加，修改不显示，列表显示，一般像创建时间就是这样  0010 = 1  
 
 
-## 第三部分 描述前后台校验方式
-校验类型:reqiure,email,username,mobile等,用于后台校验,对应thinkphp的校验格式  ，
-也支持前台验证，目前使用validform验证格式，也可使用正则表达式。
+
+# 表定义的参考格式
+```sql
+
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标题-hidden|0111',
+  `username` varchar(255) NOT NULL DEFAULT '' COMMENT '用户名--用户名为字符|1111-0011-11|require:用户名必须填写-unique-<</\\w{3,6}/i>>:用户名不合法',
+  `password` varchar(255) DEFAULT '' COMMENT '密码-password|1100-1110-0|require:密码必须填写',
+  `email` varchar(255) DEFAULT NULL COMMENT '邮箱|15-12-3|require:邮箱必须填写-email:邮箱格式不正确',
+  `birthday` date DEFAULT NULL COMMENT '生日|1111|require:密码必须填写',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态-select-禁用则不显示|1111|require|0:禁用,1:正常,2:审核中',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间|0010',
+  `flag` varchar(255) NOT NULL DEFAULT '' COMMENT '标记-select|1100|require|function=flag_options()|tpl_function=img()',
+  `intro` text COMMENT '用户介绍-editor|1100-1100-11',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表|lock-birthday|编辑:id,查看用户浏览记录:id| add-export-showMenu';
 
 
-## 第四部分   描述选项的key和value
-选项： 选项1:选项1值，选项2：缺项2值  
+```
 
-## 第五部分   回调函数处理  
-比如保存多选的tag时，页面上传过来的是个数组 tag = [a,b,c] ，但想保存为 a,b,c,则此字段可使用函数回调来处理  
-写法 implode=\,,###
-等号前面是函数名，后面是参数，用逗号分隔。像implode函数，第一参数就是逗号，则需要转义写为 \\,
 
-   
 
-# 样例写法
+# 参考格式说明
 ### 用户名--用户名为字符|1111|require:用户名必须填写-unique-<</\w{3,6}/i>>:用户名不合法    
 
 #### [ 用户名 ] 控件label   
@@ -91,25 +76,69 @@ html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的�
 #### [ 0:禁用,1:正常,2:审核中 ]   表示状态这个select控件有3个选项，0,1,2表示key  
 
 
-# 表定义的参考格式
-```sql
-
-CREATE TABLE `user` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '标题-hidden|0111',
-  `username` varchar(255) NOT NULL DEFAULT '' COMMENT '用户名--用户名为字符|1111|require:用户名必须填写-unique-<</\\w{3,6}/i>>:用户名不合法',
-  `password` varchar(255) DEFAULT '' COMMENT '密码-password|1110|require:密码必须填写',
-  `email` varchar(255) DEFAULT NULL COMMENT '邮箱|1111|require:邮箱必须填写-email:邮箱格式不正确',
-  `birthday` date DEFAULT NULL COMMENT '生日|1111|require:密码必须填写',
-  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态-select-禁用则不显示|1111|require|0:禁用,1:正常,2:审核中',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间|0010',
-  `flag` varchar(255) NOT NULL DEFAULT '' COMMENT '标记-select|1100|require|function=flag_options()|tpl_function=img()',
-  `intro` text COMMENT '用户介绍-editor|1100',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8  COMMENT='用户表|lock-birthday|编辑:id,查看用户浏览记录:id| add-export-showMenu';
 
 
 
-```
+
+# 字段注释格式说明  
+
+以 |-，之类的做分隔  
+注释标题 - htm控件类型 - 提示 |后台显示页面-用户中心-前台显示页面 | 验证类型1-验证类型2 |  选项|显示模板  
+
+## 第一部分 描述字段lable、控件类型、提示信息
+注释标题: 一般是字段的中文标题，form表单的label  
+html控件类型: select,checkbox,input,textare,datepicker,editor等,更多的控件需要你自己来实现。  
+提示:一般是此字段的填写规范，如：允许字母或数字  
+
+
+## 第二部分 描述在哪些页面显示
+
+
+1. 位表示法(1表示显示，0不显示) 
+
+添加页|修改页|列表页|搜索页
+---|---|---|---
+ 1 | 1 | 0 | 0
+ 
+ 以上表示在添加和修改页显示此字段
+
+2. 10进制表示法，就是上面的位表示法将二进制数转成10进制数
+添加页|修改页|列表页|搜索页
+---|---|---|---
+ 1 | 1 | 0 | 0
+ 
+ 1100 转成 10进制 = 12
+ 也就是说，12也表示添加页，修改页显示字段。
+
+更多例子:  
+添加,修改，列表,搜索全显示 1111 = 15  
+添加,修改，列表都要显示则是  1110 = 14  
+添加，修改显示，列表不显示    1100 = 10  
+添加，修改不显示，列表显示，一般像创建时间就是这样  0010 = 1
+  
+  如果一个项目有多个模块，每个模块显示不同的字段。则可以根据模块来配置。多个模块之间用 - 分隔。目前内置3个模块
+  后台 - 用户中心 - 前台
+  如 1111-0011-11 表示后台所有页面显示，用户中心在列表和搜索页显示，前台在列表和详情页显示。
+  由于前台一般只有列表和搜索页，所以只有2位。
+
+
+## 第三部分 描述前后台校验方式
+校验类型:reqiure,email,username,mobile等,用于后台校验,对应thinkphp的校验格式  ，
+也支持前台验证，目前使用validform验证格式，也可使用正则表达式。
+
+
+## 第四部分   描述选项的key和value
+选项： 选项1:选项1值，选项2：缺项2值  
+
+## 第五部分   回调函数处理  
+比如保存多选的tag时，页面上传过来的是个数组 tag = [a,b,c] ，但想保存为 a,b,c,则此字段可使用函数回调来处理  
+写法 implode=\,,###
+等号前面是函数名，后面是参数，用逗号分隔。像implode函数，第一参数就是逗号，则需要转义写为 \\,
+
+   
+
+
+
 
 # 表本身注释格式说明
 
@@ -224,6 +253,24 @@ function order_course_title($title,$key,$course_id){
 ```
 
 
+# 配置
+
+``` php 
+$cgfConf                       = []; //
+$cgfConf['dbConfig']           = ['host'=>'localhost','dbname'=>'test','username'=>'root','password'=>'123456','type'=>'mysql']; //数据库连接配置
+$cgfConf['savePath']           = $appBasePath . "/Cgf/definition"; //保存cgf生成的定义文件
+$cgfConf['framework']          = 'thinkphp'; //使用的框架
+$cgfConf['validate']           = 'thinkphp'; //使用验证
+$cgfConf['form']               = 'bootstrap'; //表单使用的框架
+$cgfConf['currentName']        = 'common'; //当前模块名
+$cgfConf['tableName']          = $tableName; //表名
+$cgfConf['controllerName']     = $this->controllerName; //控制器名
+$cgfConf['appRootPath']        = $appBasePath; //框架应用程序根目录
+$cgfConf['parentTemplatePath'] = $appBasePath . '/view/public/'; //cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
+$cgfConf['templateSavePath']   = $appBasePath . "/view/{$tableName}"; //cgf生成的模板保存路径
+$cgfConf['availableModule']    = ['common', 'admin']; //可用模块
+$cgfConf['autoHiddenPrimaryKey']    = true; //是否将主键表单类型设为hidden
+```
 
  # 跨库支持
  ```

@@ -1,6 +1,6 @@
 <?php
 
-namespace Cgf\Template;
+namespace Cgf\Framework\Thinkphp;
 
 use Cgf\Definition;
 use Cgf\Template;
@@ -99,12 +99,7 @@ class ThinkphpTemplate extends Template
         //$this->page = 'search';
         $htmlSearch = $this->generateSearch();
 
-        //配置select选项和选中值
-        $options = $this->definition->getAllColumnOptions();
-        foreach ($options as $column => $option) {
-            $this->assign('opt_' . $column, $option);
-            $this->assign($column . '_selected', I($column));
-        }
+        
 
         //$this->control = CONTROLLER_NAME;//
         //$this->control = '__CONTROLLER__';// 生成模板时用这个

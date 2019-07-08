@@ -26,6 +26,25 @@ class Cgf
     public $validate;
     public $template;
 
+    /**
+     *
+    $cgfConf                       = [];
+    $cgfConf['dbConfig']           = $dbconfig;
+    $cgfConf['savePath']           = $appBasePath . "/Cgf/definition";
+    $cgfConf['framework']          = 'thinkphp';
+    $cgfConf['validate']           = 'thinkphp';
+    $cgfConf['form']               = 'bootstrap';
+    $cgfConf['currentName']        = 'common';
+    $cgfConf['tableName']          = $tableName;
+    $cgfConf['controllerName']     = $this->controllerName;
+    $cgfConf['appRootPath']        = $appBasePath;
+    $cgfConf['parentTemplatePath'] = $appBasePath . '/view/public/';
+    $cgfConf['templateSavePath']   = $appBasePath . "/view/{$tableName}";
+    $cgfConf['availableModule']    = ['common', 'admin'];
+    $cgfConf['autoHiddenPrimaryKey']    = true;
+
+     * @var
+     */
     public static $config;
 
 
@@ -106,17 +125,17 @@ class Cgf
         if ($framework == 'thinkphp') {
             //$framework = new Think();
             $this->framework = $framework;
-            $this->template  = new \Cgf\Template\ThinkphpTemplate($this->definition, $form);
+            $this->template  = new \Cgf\Framework\Thinkphp\ThinkphpTemplate($this->definition, $form);
             $this->validate  = new ThinkphpValidate($this->definition);
 
         } elseif ($framework == 'laravel') {
             //$framework = new laravel();
             $this->framework = $framework;
-            $this->template  = new \Cgf\Template\LaravelTemplate($this->definition, $form);
+            $this->template  = new \Cgf\Framework\Laravel\LaravelTemplate($this->definition, $form);
             $this->validate  = new LaravelValidate();
         } else {
             $this->framework = $framework;
-            $this->template  = new \Cgf\Template\ThinkphpTemplate($this->definition, $form);
+            $this->template  = new \Cgf\Framework\Thinkphp\ThinkphpTemplate($this->definition, $form);
             $this->validate  = new ThinkphpValidate();
         }
 

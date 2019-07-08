@@ -47,17 +47,17 @@ final class CommentParser
     {
         $attribute = [];
         $attribute = self::getAttributeByColumnDefinition($columnInfo);
-
         if (!empty($columnInfo['COLUMN_COMMENT'])) {
             $commentAttribute = self::parseComment($columnInfo['COLUMN_COMMENT']);
             //var_dump($attribute,$commentAttribute);
-            return array_merge($attribute, $commentAttribute);
+            $attribute = array_merge($attribute, $commentAttribute);
         } elseif (self::defaultShowAllColumn) {
             $comment          = $columnInfo['COLUMN_NAME'] . "|1111";
             $commentAttribute = self::parseComment($comment);
-            return array_merge($attribute, $commentAttribute);
+            $attribute = array_merge($attribute, $commentAttribute);
         }
 
+        dump($attribute);
         return $attribute;
 
     }
@@ -66,11 +66,11 @@ final class CommentParser
     public static function getAttributeByColumnDefinition($columnInfo)
     {
 
-        $autoHiddenPrimaryKey   = true;
+
         $inputAttribute         = [];
         $inputAttribute['name'] = $columnInfo['COLUMN_NAME'];
         $type                   = strtoupper($columnInfo['DATA_TYPE']);
-        if ($columnInfo['COLUMN_KEY'] == 'PRI' && $autoHiddenPrimaryKey) { //主键设为隐藏
+        if ($columnInfo['COLUMN_KEY'] == 'PRI' && Cgf::$config['autoHiddenPrimaryKey']) { //主键设为隐藏
             $inputAttribute['type'] = "hidden";
             $inputAttribute['size'] = 10;
         } elseif (in_array($type, ["TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"])) { //数字类型
@@ -304,7 +304,8 @@ final class CommentParser
                 $arrShowPages['admin'] = self::getShowPage($admin, 'admin');
                 $arrShowPages['user']  = self::getShowPage($user, 'user');
                 $arrShowPages['home']  = self::getShowPage($home, 'home');
-
+// var_dump($comment,$arrShowPages);
+// echo "====================================\n";
                 $ret['arrShowPages'] = $arrShowPages;
 
 
