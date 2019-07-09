@@ -4,7 +4,7 @@ namespace Cgf\Framework\Thinkphp;
 
 use Cgf\Definition;
 use Cgf\Template;
-use Cgf\Form\Bootstrap;
+use Cgf\Framework\Thinkphp\Bootstrap;
 use Cgf\Cgf;
 use think\Exception;
 

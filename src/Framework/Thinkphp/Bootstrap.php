@@ -1,9 +1,10 @@
 <?php
 
-namespace Cgf\Form;
+namespace Cgf\Framework\Thinkphp;
 
-use Cgf\Form;
+use Cgf\Framework;
 use Cgf\FormInterface;
+use Cgf\Form;
 
 
 class Bootstrap extends Form implements FormInterface
