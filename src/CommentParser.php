@@ -283,6 +283,7 @@ final class CommentParser
                         }
                         $arrRules[] = $temp;
                     }
+                    $ret['arrRules'] = $arrRules;
                 }
 
             //状态-select-禁用则不能访问 | 7

@@ -180,7 +180,7 @@ class SqlToCgfDefinition
     {
 
         $cgfDefinition = [];
-
+        $baseCgfDefinition=[];
         foreach ($this->allColumnAttribute as $k => $columnAttribute) {
             /* $columnAttribute 数据
             array:5 [▼

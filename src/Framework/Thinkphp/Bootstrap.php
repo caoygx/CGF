@@ -16,6 +16,11 @@ class Bootstrap extends Form implements FormInterface
 
     }
 
+    /**
+     * @param $name 字段名
+     * @param $definition 字段定义
+     * @return mixed
+     */
     function generate($name, $definition)
     {
         $this->name       = $name;

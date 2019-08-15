@@ -15,6 +15,8 @@ class ThinkphpTemplate extends Template
 
     /** @var  Definition */
     public $definition;
+
+    /** @var \Cgf\Framework\Thinkphp\Bootstrap|Layui  */
     public $objForm;
     public $generateFile = false;
     public $forceWrite = true;
@@ -238,8 +240,8 @@ class ThinkphpTemplate extends Template
         } else {
             $definition = $this->definition->add;
         }
-
-        $definition = $this->definition->edit;
+        //var_dump($definition);exit;
+        //$definition = $this->definition->edit;
         $html       = "";
         foreach ($definition as $k => $v) {
             $htmlInput = $this->objForm->generate($k, $v);
