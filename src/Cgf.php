@@ -55,6 +55,7 @@ class Cgf
         $dbConfig['username'] = $sourceDbConfig['username'];
         $dbConfig['password'] = $sourceDbConfig['password'];
         $dbConfig['type']     = $sourceDbConfig['type'];
+        $dbConfig['prefix']     = $sourceDbConfig['prefix'];
         return $dbConfig;
     }
 
@@ -87,6 +88,7 @@ class Cgf
         $form      = $cgfConf['form'];
         $tableName = $cgfConf['tableName'];
 
+
         $this->saveDefinitionDir = $savePath;
         if (!file_exists($this->saveDefinitionDir)) {
             mkdir($this->saveDefinitionDir, 0777, true);
@@ -99,12 +101,12 @@ class Cgf
         }
 
         //取模块名，获取表名，连接数据库，生成定义，返回html
-        $this->tableFullName = $tableName;
+        $tableFullName = $dbConfig['prefix'].$tableName;
 
         $tableInfo                        = [];
-        $tableInfo['allColumnDefinition'] = $this->tableInfo->getTableDefinition($tableName);
-        $tableInfo['tableComment']        = $this->tableInfo->getTableComment($tableName); //字段注释
-        $tableInfo['isLockDefinition']    = $this->tableInfo->isLockDefinition($tableName);
+        $tableInfo['allColumnDefinition'] = $this->tableInfo->getTableDefinition($tableFullName);
+        $tableInfo['tableComment']        = $this->tableInfo->getTableComment($tableFullName); //字段注释
+        $tableInfo['isLockDefinition']    = $this->tableInfo->isLockDefinition($tableFullName);
         $tableInfo['tableName']           = $tableName;
 
 
@@ -412,7 +414,7 @@ class Cgf
                         $parameter     = $funcParameters;
                     } else { //显示配置选项的name
                         //var_dump($commentInfo['options']);exit;
-                        C($name, $commentInfo['options']);
+                        config($name, $commentInfo['options']);
                         //$functionName = "|optionsValue='$name'";//.ucfirst($name);
                         $function_name = 'optionsValue';
                         $parameter     = $name;
@@ -589,8 +591,11 @@ class Cgf
                     $parameter[] = $v; //整行记录放入最后1个参数*/
                 }
 
-                $v[$column] = call_user_func_array($functionDefinition['function_name'], $parameter);
-                //var_dump($functionDefinition['function_name'],$parameter,$v[$column]);exit;
+                //if(function_exists($functionDefinition['function_name'])){
+                    $v[$column] = call_user_func_array($functionDefinition['function_name'], $parameter);
+                    //var_dump($functionDefinition['function_name'],$parameter,$v[$column]);exit;
+                //}
+
             }
         }
     }

@@ -113,7 +113,7 @@ class Bootstrap extends Form implements FormInterface
     {
         $name  = $this->name;
         $first = 'first="请选择"';
-        $html  = "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" />";
+        $html  = "<html:select  $first options='opt_{$name}' selected='{$name}_selected' name=\"{$name}\" style=\"form-control\" />";
         //echo $html;exit('select');
         return $html;
     }
@@ -131,14 +131,14 @@ class Bootstrap extends Form implements FormInterface
             $this->assign("{$columnInfo['COLUMN_NAME']}_selected", $this->data[$columnInfo['COLUMN_NAME']]);
         }*/
 
-        $html = "<html:radio radios='opt_{$name}' checked='{$name}_selected' name='{$name}' separator='&nbsp;&nbsp;' />";
+        $html = "<html:radio radios='opt_{$name}' checked='{$name}_selected' name='{$name}' separator='&nbsp;&nbsp;'  style=\"form-control\" />";
         return $html;
     }
 
     function checkbox()
     {
         $name = $this->name;
-        $html = "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}' />";
+        $html = "<html:checkbox checkboxes='opt_{$name}' checked='{$name}_selected' name='{$name}'  style=\"form-control\" />";
         return $html;
     }
 
@@ -153,7 +153,7 @@ class Bootstrap extends Form implements FormInterface
                                 <notempty name=\"vo['$name']\">
                                 <img src=" . '"{$vo.' . $name . '|img}"' . " width='100' />
                                  <else />
-                                 <img src=" . '"{$Think.config.DEFAULT_IMG}"' . " width='100' />
+                                 <img src=" . '"{:config("app.default_image")}"' . " width='100' />
                                  </notempty>
                                  </div>";
         $html .= "";

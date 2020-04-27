@@ -15,7 +15,7 @@ final class CommentParser
     const LISTS = 2; //0010
     const SEARCH = 1; //0001
 
-    public $defaultShowAllColumn = true;
+    const defaultShowAllColumn = true;
 
     //获取字段类型及长度
     public static function getColumnType($type)
@@ -105,6 +105,13 @@ final class CommentParser
     }
 
 
+    /**
+     * 获取在哪些页面显示
+     * 返回示例 ['add','edit','list','search']
+     * @param $showPage 页面标记 如:1100
+     * @param $module 模块 取值:home,admin
+     * @return array
+     */
     public static function getShowPage($showPage, $module)
     {
         if (strlen($showPage) < 1 || $showPage == null) $showPage = 15;
@@ -286,7 +293,7 @@ final class CommentParser
                     $ret['arrRules'] = $arrRules;
                 }
 
-            //状态-select-禁用则不能访问 | 7
+            //状态-select-禁用则不能访问 | 1111-1110-1100
             case ($c >= 2):
                 $showPage = trim($arr[1]);
                 //if (!is_numeric($showPage)) E('显示页面属性必须是数字');
@@ -307,13 +314,8 @@ final class CommentParser
                     $home  = $admin;
                 }
 
-                $arrShowPages          = [];
-                $arrShowPages['admin'] = self::getShowPage($admin, 'admin');
-                $arrShowPages['user']  = self::getShowPage($user, 'user');
-                $arrShowPages['home']  = self::getShowPage($home, 'home');
-// var_dump($comment,$arrShowPages);
-// echo "====================================\n";
-                $ret['arrShowPages'] = $arrShowPages;
+
+
 
 
             //状态-select-禁用则不能访问
@@ -343,6 +345,16 @@ final class CommentParser
                         $zh = $arrTitle[0];
                         $ret['zh'] = $zh;
                 }
+
+                //在哪些页面显示
+                $arrShowPages          = [];
+                $arrShowPages['admin'] = self::getShowPage($admin, 'admin');
+                $arrShowPages['user']  = self::getShowPage($user, 'user');
+                $arrShowPages['home']  = self::getShowPage($home, 'home');
+                // var_dump($comment,$arrShowPages);
+                // echo "====================================\n";
+                $ret['arrShowPages'] = $arrShowPages;
+
 
         }
 
