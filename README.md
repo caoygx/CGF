@@ -1,4 +1,10 @@
 ### 详细文档见doc目录中
+### demo和案例
+http://cgf.rrbrr.com/admin 账号密码 admin admin
+
+http://cgfcms.rrbrr.com/admin/goods/index
+
+
 
 #目录结构和设计说明
 definition 是所有表定义
