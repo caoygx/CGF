@@ -1,3 +1,7 @@
+# 安装 install
+composer require rrbrr/cgf
+
+
 ### 详细文档见doc目录中
 ### demo和案例
 http://cgf.rrbrr.com/admin 账号密码 admin admin
