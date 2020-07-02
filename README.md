@@ -571,13 +571,7 @@ $cgfConf['autoHiddenPrimaryKey']    = true; //是否将主键表单类型设为h
 ![列表页面](https://github.com/caoygx/CGF/blob/master/screenshot/lists.jpg)
 
 
-
  
- # 其它扩展思路
- 可以做个生成工具
- 还可以用这个工具来直接生成json来描述，这样就是难看一点，但描述更清晰
- 更进一步可以用工具来生成其它更精简的格式
-
 
 
  # 下一步支持
