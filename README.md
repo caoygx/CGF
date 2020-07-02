@@ -9,7 +9,7 @@ composer require rrbrr/cgf
 ### 详细文档见doc目录中
 ### demo和案例
 
-#### thinkphp6.0版本
+#### thinkphp6版本
 demo
 http://cgfcms.rrbrr.com/admin/goods/index
 
@@ -17,7 +17,7 @@ github
 https://github.com/caoygx/cgf_demo
 
 
-### thinkphp3.0版本
+### thinkphp3版本
 demo
 http://cgf.rrbrr.com/admin 账号密码 admin admin
 
