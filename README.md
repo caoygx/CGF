@@ -24,8 +24,9 @@ http://cgf.rrbrr.com/admin 账号密码 admin admin
 github
 https://github.com/caoygx/cgf_demo
 
-#设计思想
+# 设计思想
 根据每个功能的配置文件来生成对应的表单界面，验证规则，sql查询字段。
+
 流程
 1.定义配置
 ```
