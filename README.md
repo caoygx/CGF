@@ -6,7 +6,7 @@
 composer require rrbrr/cgf
 
 
-### 详细文档见doc目录中
+
 ### demo和案例
 
 #### thinkphp6版本
@@ -61,6 +61,7 @@ return array(
 当然这个配置可以根据表的定义来自动生成。具体方法参考文档说明。
 
 
+### 详细文档见doc目录中
 
 
 #目录结构和设计说明
