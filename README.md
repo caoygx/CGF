@@ -1,12 +1,65 @@
+# CGF(Comment Generate Form) 
+根据表字段注释自动实现CURD。只要建好表就拥有了添加,修改，列表，搜索基本功能。大大提高开发效率，让你真正飞起来！   
+
+
 # 安装 install
 composer require rrbrr/cgf
 
 
 ### 详细文档见doc目录中
 ### demo和案例
+
+#### thinkphp6.0版本
+demo
+http://cgfcms.rrbrr.com/admin/goods/index
+
+github
+https://github.com/caoygx/cgf_demo
+
+
+### thinkphp3.0版本
+demo
 http://cgf.rrbrr.com/admin 账号密码 admin admin
 
-http://cgfcms.rrbrr.com/admin/goods/index
+github
+https://github.com/caoygx/cgf_demo
+
+#设计思想
+根据每个功能的配置文件来生成对应的表单界面，验证规则，sql查询字段。
+流程
+1.定义配置
+```
+return array(
+    'base' =>
+        array(
+            'username'    =>
+                array(
+                    'name' => 'uesrname',
+                    'type' => 'text',
+                    'size' => 10,
+                    'zh'   => 'id',
+                ),
+            'status_flag' =>
+                array(
+                    'name'      => 'status_flag', //数据表字段名
+                    'type'      => 'text',        //类型
+                    'size'      => 10,
+                    'rawOption' => '0:禁用,1:正常', //可选值
+                    'options'   =>
+                        array(
+                            0 => '禁用',
+                            1 => '正常',
+                        ),
+                    'zh'        => '用户状态',            //后台列表中展示的标题
+                    'show_text' => 'status_flag_text',  //将枚举的数学类型的值转为文本显示
+                ),
+        )
+);
+```
+2.解析配置，生成相应的模板文件和后端处理程序。
+
+当然这个配置可以根据表的定义来自动生成。具体方法参考文档说明。
+
 
 
 
@@ -15,7 +68,7 @@ definition 是所有表定义
 Form下是具体表单的实现类，继承Form.class.php
 Validate下是各框架下的验证实现，继承Validate.php
 
-
+ 
 #definition结构说明
 #### [模块名][页名] 
 
@@ -247,36 +300,6 @@ $cgf['home']=["base"=>['字段1','字段2','字段3'],"list"=>['字段3']]
 
  ==================================================================== 
  
-
-# CGF(Comment Generate Form) 不写一行代码，实现增删改查
-
-这是一种表字段注释的格式，一种思想，不限于任何编程语言，只要各语言实现了这种方式，就能自动实现CURD。  
-
-根据表字段注释，自动实现添加,修改，列表，搜索基本功能。    
-只要定义好字段的注释，就能实现增删改查。大大提高开发效率，让你真正飞起来！   
-
-希望大家可以一起来完善这种格式，让其变成一种标准或协议。  
-
-# 安装 install
-composer require rrbrr/cgf
-
-
-
-# 使用
-参考demo写法
-
-
-
-
-# demo 样例(基于thinkphp实现的)  
-http://cgf.rrbrr.com/
-
-大家可以连上测试数据库，增加些表，试用下。请不要删除原来的表。
-
-数据库地址    qdm112455516.my3w.com  
-数据库账号    qdm112455516  
-数据库密码    cgfrrbrr  
-
 
 
 
