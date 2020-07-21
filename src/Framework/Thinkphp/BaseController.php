@@ -231,7 +231,7 @@ class {%className%} extends Common
 
             $viewDir                         = $this->app->getAppPath() . "view/" . $this->request->module . "/";
             $cgfConf['parentTemplatePath']   = $viewDir . 'public/';//cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
-            $cgfConf['templateSavePath']     = $viewDir . "{$tableName}";//cgf生成的模板保存路径
+            $cgfConf['templateSavePath']     = $viewDir . "{$this->controllerName}";//cgf生成的模板保存路径
             $cgfConf['availableModule']      = ['common', 'admin', 'index'];//可用模块
             $cgfConf['autoHiddenPrimaryKey'] = false;//是否将主键表单类型设为hidden
 

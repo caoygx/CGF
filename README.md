@@ -2,7 +2,7 @@
 根据表字段注释自动实现CURD。只要建好表就拥有了添加,修改，列表，搜索基本功能的接口，还有后台完整的管理页面。大大提高开发效率，让你真正飞起来！   
 
 
-# 安装 install
+### 安装 install
 composer require rrbrr/cgf
 
 
