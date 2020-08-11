@@ -5,6 +5,34 @@
 ### 安装 install
 composer require rrbrr/cgf
 
+### tp6中使用方法
+```php
+
+$tableName = think\helper\Str::snake($this->controllerName, '_');
+$appBasePath = __DIR__;
+$dbconfig    = include('../config/database.php');
+$dbconfig    = $dbconfig['connections']['mysql'];
+$dbconfig    = Cgf::getDbConfigFromThinkPHP($dbconfig); //将tp6 db配置转成cgf的配置
+$cgfConf                       = [];
+$cgfConf['dbConfig']           = $dbconfig;
+$cgfConf['savePath']           = $appBasePath . "/cgf/definition";//保存cgf生成的定义文件
+$cgfConf['framework']          = 'thinkphp';//使用的框架
+$cgfConf['validate']           = 'thinkphp';//使用验证库
+$cgfConf['form']               = 'bootstrap';//表单使用的框架
+$cgfConf['currentName']        = 'common';//当前模块名
+$cgfConf['tableName']          = $tableName;//表名
+$cgfConf['controllerName']     = $this->controllerName;//控制器名
+$cgfConf['appRootPath']        = $appBasePath;//框架应用程序根目录
+
+$viewDir = $this->app->getAppPath()."view/".$this->request->module."/";
+$cgfConf['parentTemplatePath'] = $viewDir . 'public/';//cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
+$cgfConf['templateSavePath']   = $viewDir . "{$tableName}";//cgf生成的模板保存路径
+$cgfConf['availableModule']    = ['common', 'admin','index'];//可用模块
+$cgfConf['autoHiddenPrimaryKey']    = false;//是否将主键表单类型设为hidden
+
+$this->cgf = new Cgf($cgfConf);
+```
+
 
 ### demo和案例
 
