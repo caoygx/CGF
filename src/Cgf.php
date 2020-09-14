@@ -384,7 +384,7 @@ class Cgf
             $commentInfo = $this->parseComment($columnInfo['COLUMN_COMMENT']);
 
             if (!in_array($this->page, $commentInfo['arrShowPages'][$this->moduleName])
-                || (MODULE_NAME == 'User' && $this->page == 'list' && $columnInfo['COLUMN_NAME'] == 'user_id')
+                || ($this->moduleName == 'User' && $this->page == 'list' && $columnInfo['COLUMN_NAME'] == 'user_id')
             ) { //字段不显示，返回空
                 continue;
             }

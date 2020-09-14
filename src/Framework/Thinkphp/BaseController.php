@@ -1,8 +1,7 @@
 <?php
 
-declare (strict_types=1);
 
-namespace madmin\controller;
+namespace Cgf\Framework\Thinkphp;
 
 use Cgf\Cgf;
 use think\App;
@@ -15,7 +14,7 @@ use think\facade\Console;
 use think\exception\ValidateException;
 use think\Model;
 use think\Validate;
-use liliuwei\think\Jump;
+//use liliuwei\think\Jump;
 
 
 /**
@@ -24,7 +23,7 @@ use liliuwei\think\Jump;
 abstract class BaseController
 {
 
-    use \liliuwei\think\Jump;
+    //use \liliuwei\think\Jump;
 
     public $u_id;
     public $store_id;
@@ -53,7 +52,7 @@ class {%className%} extends Common
     /**
      * @var 前台用户id标识
      */
-    public $front_user_id = 'uid';
+    public $front_user_id = 'user_id';
 
     /**
      * 后台用户id标识
@@ -61,6 +60,7 @@ class {%className%} extends Common
      */
     public $backend_user_id = 'admin_id';
 
+    protected $user_id = 0;
 
     /**
      * Request实例
@@ -86,6 +86,10 @@ class {%className%} extends Common
      */
     protected $middleware = [];
 
+    protected $routeType = "";
+
+
+
     /**
      * 构造方法
      * @access public
@@ -93,10 +97,9 @@ class {%className%} extends Common
      */
     public function __construct(App $app)
     {
-
-
         $this->app     = $app;
         $this->request = $this->app->request;
+        if($this->request->user_id) $this->user_id = $this->request->user_id;
 
         // 控制器初始化
         $this->initialize();
@@ -163,25 +166,56 @@ class {%className%} extends Common
 
     function createModelAutomatically($modelName)
     {
-        $className = '\\app\\model\\' . $modelName;
-        if (!class_exists($className)) {
+        $modelDir = $this->getModelDir();
+        /*if($this->routeType == "micro_module_class"){
+            $className = '\\app\\model\\' . $modelName;
+        }else{
+            $className = '\\muser\\model\\';
+        }*/
+        $className = $modelDir."\\".$modelName;
+
+
+        //if (!class_exists($className)) {
             //$this->makeModelFile('app\\model\\'.$modelName);//exit;
-            Console::call('make:model', ['app\\model\\' . $modelName]);
-        }
+            //Console::call('make:model', ['app\\model\\' . $modelName]);
+        //}
         $this->m = app($className);
         //$this->m = new $className();
 
     }
 
+    function createModelForMicroModule(){
+        $className = '\\app\\model\\' . $modelName;
+
+    }
+
+
 
     // 初始化
     protected function initialize()
     {
-        $route       = $this->app->request->rule()->getRoute();
-        $vendorRoute = substr($route, strrpos($route, '\\') + 1);
-        $route       = str_replace('@', '/', $vendorRoute);
+        //$route       = $this->app->request->rule()->getRoute();
+        $route       = $this->app->request->rule()->getName();
+        if (false !== strpos($route, '\\')){ //类路由 \mnews\controller\News@index
+            $this->routeType = "micro_module_class";
+            $vendorRoute = substr($route, strrpos($route, '\\') + 1);
+            $route       = str_replace('@', '/', $vendorRoute);
+        }
+        //if()
+        //$delimiter = \think\helper\Str::contains($route, '@') ? '@' : '/';
+
+        //$route = explode(\think\helper\Str::contains($route, '@') ? '@' : '/', $route);
+        if(empty($route)){
+            $route = $this->app->request->pathinfo();
+        }
+       /* if($route){
+
+        }else{
+            $route = $this->app->request->pathinfo();
+        }*/
+
         $arrRoute = explode('/',$route);
-        $controllerName = $arrRoute[0];
+        $controllerName = ucfirst($arrRoute[0]);
         $actionName = $arrRoute[1];
 
         //var_dump(Request::isAjax());exit;
@@ -251,7 +285,6 @@ class {%className%} extends Common
         if (!empty ($this->m)) {
             $this->_list($this->m);
         }
-
         $default_return_format = config('app.default_return_format', 'html');
         if (in_array($this->request->module, ["admin", "uer"]) && $default_return_format == 'html') { //only backend need generate template
             $r = $this->cgf->generateListsTemplate();//生成模板
@@ -298,21 +331,20 @@ class {%className%} extends Common
 
     function save()
     {
-
-
         $data = input();
-        if ($this->uid) {
-            $data['uid']      = $this->uid;
-            $data['store_id'] = $this->store_id;
+        if(method_exists($this,"_before_save")){
+            $this->_before_save($data);
+        }
+        if ($this->user_id) {
+            $data['user_id']      = $this->user_id;
         }
 
         $pk = $this->m->getPk();
         $id = $data[$pk];
-
-        //验证编辑保存权限
+        //编辑时，验证信息所有者权限
         if (!empty($id)) {
-            $rModel = $this->m->where([$this->m->getPk() => $id, "store_id" => $this->store_id])->find();
-            if (empty($rModel)) return $this->error('没有所有者权限');
+            $rModel = $this->m->where([$this->m->getPk() => $id])->find(); //, "store_id" => $this->store_id
+            //if (empty($rModel)) return $this->error('没有所有者权限');
         }
 
         //处理上传
@@ -323,12 +355,13 @@ class {%className%} extends Common
             }
         }
 
-        //字段验证
-        //validate('app\validate\User')->check($data);
-        /* $m = new \app\model\User();
-         $className = '\\app\\model\\User';
-         $m = new $className();
-         dump($m);*/
+        //验证
+        if (method_exists($this, '_validateSave')) {
+            $rValidate = $this->_validateSave($this->m);
+            if($rValidate !== true){
+                return $this->error($rValidate);
+            }
+        }
 
         //保存
         if (empty($data[$pk])) {
@@ -344,7 +377,7 @@ class {%className%} extends Common
         $id = $this->m->id;
         if (!empty($id)) $this->assign('id', $id);
 
-        $this->success();
+        return $this->toview();
         //return $this->success();
         //return $this->toview();
 
@@ -492,7 +525,21 @@ class {%className%} extends Common
 
     function commonUpload($moduleDir = 'file')
     {
-        return commonUpload($moduleDir);
+        $imageInfoOfSaved = [];
+        $files = request()->file('');
+        foreach ($files as $name => $file) {
+            if(empty($moduleDir)) $moduleDir = $name;
+            if (is_array($file)) {
+                foreach ($file as $k => $v) {
+                    $imageInfoOfSaved[$name][] = \think\facade\Filesystem::disk('public')->putFile( $moduleDir, $v);
+                }
+            } else {
+                $imageInfoOfSaved[$name] = \think\facade\Filesystem::disk('public')->putFile($moduleDir, $file);
+            }
+        }
+        return $imageInfoOfSaved;
+
+        //return commonUpload($moduleDir);
     }
 
     public function delete()
@@ -846,13 +893,12 @@ class {%className%} extends Common
     {
         $requestParam = input();
         //$requestParam['uid'] = $this->request->uid;
-        $front_user_id                  = $this->front_user_id;
-        $backend_user_id                = $this->backend_user_id;
+        $front_user_id                  = config("cgf.front_user_id");//$this->front_user_id;
+        $backend_user_id                = config("cgf.backend_user_id");//$this->backend_user_id;
         $requestParam[$front_user_id]   = $this->request->$front_user_id;
         $requestParam[$backend_user_id] = $this->request->$backend_user_id;
-        $requestParam['store_id']       = $this->request->store_id;
-
-        $requestParam['status'] = $this->request->status;
+        //$requestParam['store_id']       = $this->request->store_id;
+        //$requestParam['status'] = $this->request->status;
         //var_dump($requestParam);exit;
         $autoIndistinct = true;
         $tableName      = Str::snake($this->controllerName, '_');
@@ -868,13 +914,13 @@ class {%className%} extends Common
                 }
             }
         }
+        //var_dump($this->m);exit;
         //配置select选项和选中值
         $options = $this->cgf->getAllColumnOptions();
         foreach ($options as $column => $option) {
             $this->assign('opt_' . $column, $option);
             $this->assign($column . '_selected', input($column, []));
         }
-
     }
 
     function columnType($type)
@@ -898,6 +944,7 @@ class {%className%} extends Common
      */
     protected function _list($model, $sortBy = '', $asc = false)
     {
+
 
         //排序字段 默认为主键名
         if (!empty($_REQUEST ['_order'])) {
@@ -1003,7 +1050,6 @@ class {%className%} extends Common
                      //$p->parameter[$key] =  urlencode ( $val );
                  }
              }*/
-
 
             //列表排序相关
             $sortImg = $sort == 'desc' ? "glyphicon-arrow-down" : "glyphicon-arrow-up"; //排序图标 glyphicon glyphicon-arrow-up
