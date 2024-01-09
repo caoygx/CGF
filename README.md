@@ -1,5 +1,10 @@
-# CGF(Comment Generate Form) 
-根据表字段注释自动实现CURD。只要建好表就拥有了添加,修改，列表，搜索基本功能的接口，还有后台完整的管理页面。大大提高开发效率，让你真正飞起来！   
+ 
+随着现在框架发展的发展，本来已经放弃了这个项目。但现在依然看到大量的底层码农在写增删改查，实在受不了。于是连夜捡起这个项目。
+能直接无代码实现增删改，直接解放后端苦逼码农。
+
+
+### CGF(Comment Generate Form)
+根据表字段注释自动实现CURD。只要建好表就拥有了添加,修改，列表，搜索基本功能的接口。
 
 
 ### 安装 install
@@ -33,23 +38,6 @@ $cgfConf['autoHiddenPrimaryKey']    = false;//是否将主键表单类型设为h
 $this->cgf = new Cgf($cgfConf);
 ```
 
-
-### demo和案例
-
-#### thinkphp6版本
-demo
-http://cgfcms.rrbrr.com/admin/goods/index
-
-github
-https://github.com/caoygx/cgf_demo
-
-
-### thinkphp3版本
-demo
-http://cgf.rrbrr.com/admin 账号密码 admin admin
-
-github
-https://github.com/caoygx/cgf_demo
 
 
 比如建个文章表
