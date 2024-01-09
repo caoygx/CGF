@@ -10,34 +10,28 @@
 ### 安装 install
 composer require rrbrr/cgf
 
-### tp6中使用方法
+### thinkphp中使用方法(支持thinkphp8)
+####1. 直接去vendor/rrbrr/cgf/Error.php复制到app/controller中
+####2. 手工在app/controller目录下创建Error.php文件，写入以下代码
 ```php
+<?php
+namespace app\controller;
+use Cgf\Framework\Thinkphp\BaseController;
 
-$tableName = think\helper\Str::snake($this->controllerName, '_');
-$appBasePath = __DIR__;
-$dbconfig    = include('../config/database.php');
-$dbconfig    = $dbconfig['connections']['mysql'];
-$dbconfig    = Cgf::getDbConfigFromThinkPHP($dbconfig); //将tp6 db配置转成cgf的配置
-$cgfConf                       = [];
-$cgfConf['dbConfig']           = $dbconfig;
-$cgfConf['savePath']           = $appBasePath . "/cgf/definition";//保存cgf生成的定义文件
-$cgfConf['framework']          = 'thinkphp';//使用的框架
-$cgfConf['validate']           = 'thinkphp';//使用验证库
-$cgfConf['form']               = 'bootstrap';//表单使用的框架
-$cgfConf['currentName']        = 'common';//当前模块名
-$cgfConf['tableName']          = $tableName;//表名
-$cgfConf['controllerName']     = $this->controllerName;//控制器名
-$cgfConf['appRootPath']        = $appBasePath;//框架应用程序根目录
-
-$viewDir = $this->app->getAppPath()."view/".$this->request->module."/";
-$cgfConf['parentTemplatePath'] = $viewDir . 'public/';//cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
-$cgfConf['templateSavePath']   = $viewDir . "{$tableName}";//cgf生成的模板保存路径
-$cgfConf['availableModule']    = ['common', 'admin','index'];//可用模块
-$cgfConf['autoHiddenPrimaryKey']    = false;//是否将主键表单类型设为hidden
-
-$this->cgf = new Cgf($cgfConf);
+class Error extends BaseController
+{
+    public function __call($method, $args)
+    {
+        return 'error request!';
+    }
+}
 ```
+#### 3. 然后就直接访问 /表名/index，如 /article/index,/article/save
 
+###默认支持以下方法，如果想修改可以打开Cgf\Framework\Thinkphp\BaseController自己修改
+1. index 列表
+2. save 添加/保存
+3. delete 删除
 
 
 比如建个文章表
