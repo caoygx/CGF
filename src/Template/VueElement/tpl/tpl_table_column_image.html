@@ -1,0 +1,6 @@
+<el-table-column label="{$cnName}" prop="{$name}"  align="center" width="120" >
+    <template slot-scope="{row}">
+        <el-image :src="'http://www.recycle.com/storage/'+row.{$name}" fit="contain" ></el-image>
+    </template>
+</el-table-column>
+
