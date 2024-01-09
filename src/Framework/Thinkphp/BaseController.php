@@ -14,6 +14,7 @@ use think\facade\Console;
 use think\exception\ValidateException;
 use think\Model;
 use think\Validate;
+
 //use liliuwei\think\Jump;
 
 
@@ -23,15 +24,13 @@ use think\Validate;
 abstract class BaseController
 {
 
-    //use \liliuwei\think\Jump;
-
     public $u_id;
     public $user;
 
     /**
      * @var Cgf
      */
-    public $cgf; //静态类会不会更好？
+    public $cgf;
 
     /** @var  Model */
     public $m;
@@ -92,20 +91,19 @@ class {%className%} extends Common
     protected $routeType = "";
 
 
-
     /**
      * 构造方法
      * @access public
-     * @param  App $app 应用对象
+     * @param App $app 应用对象
      */
     public function __construct(App $app)
     {
-        $this->app     = $app;
+        $this->app = $app;
         $this->request = $this->app->request;
-        if($this->request->user_id){
+        if ($this->request->user_id) {
             $this->user_id = $this->request->user_id;
             $this->user = $this->request->user;
-        }elseif($this->request->admin_id){
+        } elseif ($this->request->admin_id) {
             $this->admin_id = $this->request->admin_id;
             $this->admin = $this->request->admin;
         }
@@ -118,10 +116,10 @@ class {%className%} extends Common
     /**
      * 验证数据
      * @access protected
-     * @param  array $data 数据
-     * @param  string|array $validate 验证器名或者验证规则数组
-     * @param  array $message 提示信息
-     * @param  bool $batch 是否批量验证
+     * @param array $data 数据
+     * @param string|array $validate 验证器名或者验证规则数组
+     * @param array $message 提示信息
+     * @param bool $batch 是否批量验证
      * @return array|string|true
      * @throws ValidateException
      */
@@ -136,7 +134,7 @@ class {%className%} extends Common
                 list($validate, $scene) = explode('.', $validate);
             }
             $class = false !== strpos($validate, '\\') ? $validate : $this->app->parseClass('validate', $validate);
-            $v     = new $class();
+            $v = new $class();
             if (!empty($scene)) {
                 $v->scene($scene);
             }
@@ -155,7 +153,7 @@ class {%className%} extends Common
 
     function makeModelFile($name)
     {
-        $stub      = $this->modelTemplate;
+        $stub = $this->modelTemplate;
         $namespace = trim(implode('\\', array_slice(explode('\\', $name), 0, -1)), '\\');
 
         $class = str_replace($namespace . '\\', '', $name);
@@ -182,30 +180,30 @@ class {%className%} extends Common
         }else{
             $className = '\\muser\\model\\';
         }*/
-        $className = $modelDir."\\".$modelName;
-//var_dump($className);exit;
+        $className = $modelDir . "\\" . $modelName;
 
         //if (!class_exists($className)) {
-            //$this->makeModelFile('app\\model\\'.$modelName);//exit;
-            //Console::call('make:model', ['app\\model\\' . $modelName]);
+        //$this->makeModelFile('app\\model\\'.$modelName);//exit;
+        //Console::call('make:model', ['app\\model\\' . $modelName]);
         //}
         $this->m = app($className);
         //$this->m = new $className();
 
     }
 
-    function createModelAutomatically($modelName){
+    function createModelAutomatically($modelName)
+    {
         $modelDir = '';
-        if(method_exists($this,'getModelDir')){
+        if (method_exists($this, 'getModelDir')) {
             $modelDir = $this->getModelDir();
         }
-        if(empty($modelDir)){
+        if (empty($modelDir)) {
             $modelDir = '\\app\\model';
         }
-        $className = $modelDir."\\".$modelName;
-        if(!class_exists($className)){
+        $className = $modelDir . "\\" . $modelName;
+        if (!class_exists($className)) {
             //$this->makeModelFile('app\\model\\'.$modelName);//exit;
-            Console::call('make:model',['app\\model\\'.$modelName]); //目前只能在app目录下生成model
+            Console::call('make:model', ['app\\model\\' . $modelName]); //目前只能在app目录下生成model
         }
 //        var_dump($className);exit('x')
         $this->m = app($className);
@@ -214,51 +212,51 @@ class {%className%} extends Common
 
     }
 
-    function createModelForMicroModule(){
+    function createModelForMicroModule()
+    {
         $className = '\\app\\model\\' . $modelName;
 
     }
-
 
 
     // 初始化
     protected function initialize()
     {
         //$route       = $this->app->request->rule()->getRoute();
-        $route       = $this->app->request->rule()->getName();
-        if (false !== strpos($route, '\\')){ //类路由 \mnews\controller\News@index
+        $route = $this->app->request->rule()->getName();
+        if (false !== strpos($route, '\\')) { //类路由 \mnews\controller\News@index
             $this->routeType = "micro_module_class";
             $vendorRoute = substr($route, strrpos($route, '\\') + 1);
-            $route       = str_replace('@', '/', $vendorRoute);
+            $route = str_replace('@', '/', $vendorRoute);
         }
         //if()
         //$delimiter = \think\helper\Str::contains($route, '@') ? '@' : '/';
 
         //$route = explode(\think\helper\Str::contains($route, '@') ? '@' : '/', $route);
-        if(empty($route)){
+        if (empty($route)) {
             $route = $this->app->request->pathinfo();
         }
-       /* if($route){
+        /* if($route){
 
-        }else{
-            $route = $this->app->request->pathinfo();
-        }*/
+         }else{
+             $route = $this->app->request->pathinfo();
+         }*/
 
-        $arrRoute = explode('/',$route);
+        $arrRoute = explode('/', $route);
         $controllerName = ucfirst($arrRoute[0]);
         $actionName = $arrRoute[1];
         //var_dump(Request::isAjax());exit;
-        define('CONTROLLER_NAME',$controllerName);
+        define('CONTROLLER_NAME', $controllerName);
         define('IS_AJAX', Request::isAjax());
         define('IS_GET', Request::isGet());
         define('IS_POST', Request::isPost());
         define('URL_IMG', '/storage');
         //var_dump(CONTROLLER_NAME);exit;
 
-        $this->moduleName     = app('http')->getName();
-        $this->moduleName     = 'index';
+        $this->moduleName = app('http')->getName();
+        $this->moduleName = 'index';
         $this->controllerName = $controllerName;
-        $this->actionName     = $actionName;
+        $this->actionName = $actionName;
         //var_dump($this->moduleName,$this->controllerName,$this->actionName);exit;
 
         $this->assign('controllerName', $this->controllerName);
@@ -276,26 +274,26 @@ class {%className%} extends Common
 
             error_reporting(E_ALL ^ E_NOTICE ^ E_DEPRECATED ^ E_STRICT ^ E_WARNING);
             $appBasePath = $this->app->getAppPath();
-            $dbconfig    = include('../config/database.php');
-            $dbconfig    = $dbconfig['connections']['mysql'];
+            $dbconfig = include('../config/database.php');
+            $dbconfig = $dbconfig['connections']['mysql'];
             //dump(Cgf::$config);exit;
             $dbconfig = Cgf::getDbConfigFromThinkPHP($dbconfig); //将tp6 db配置转成cgf的配置
 
-            $cgfConf                   = [];
-            $cgfConf['dbConfig']       = $dbconfig;
-            $cgfConf['savePath']       = $appBasePath . "/cgf/definition";//保存cgf生成的定义文件
-            $cgfConf['framework']      = 'thinkphp';//使用的框架
-            $cgfConf['validate']       = 'vueElement';//使用验证库
-            $cgfConf['template']           = 'vueElement';//表单使用的框架
-            $cgfConf['currentName']    = 'common';//当前模块名
-            $cgfConf['tableName']      = $tableName;//表名
+            $cgfConf = [];
+            $cgfConf['dbConfig'] = $dbconfig;
+            $cgfConf['savePath'] = $appBasePath . "/cgf/definition";//保存cgf生成的定义文件
+            $cgfConf['framework'] = 'thinkphp';//使用的框架
+            $cgfConf['validate'] = 'vueElement';//使用验证库
+            $cgfConf['template'] = 'vueElement';//表单使用的框架
+            $cgfConf['currentName'] = 'common';//当前模块名
+            $cgfConf['tableName'] = $tableName;//表名
             $cgfConf['controllerName'] = $this->controllerName;//控制器名
-            $cgfConf['appRootPath']    = $appBasePath;//框架应用程序根目录
+            $cgfConf['appRootPath'] = $appBasePath;//框架应用程序根目录
 
-            $viewDir                         = $this->app->getAppPath() . "view/" . $this->request->module . "/";
-            $cgfConf['parentTemplatePath']   = $viewDir . 'public/';//cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
-            $cgfConf['templateSavePath']     = $viewDir . "{$this->controllerName}";//cgf生成的模板保存路径
-            $cgfConf['availableModule']      = ['common', 'admin', 'index'];//可用模块
+            $viewDir = $this->app->getAppPath() . "view/" . $this->request->module . "/";
+            $cgfConf['parentTemplatePath'] = $viewDir . 'public/';//cgf生成模板使用的父模板,cgf会根据这里的模板来生成应用模板
+            $cgfConf['templateSavePath'] = $viewDir . "{$this->controllerName}";//cgf生成的模板保存路径
+            $cgfConf['availableModule'] = ['common', 'admin', 'index'];//可用模块
             $cgfConf['autoHiddenPrimaryKey'] = false;//是否将主键表单类型设为hidden
 
             $this->cgf = new Cgf($cgfConf);
@@ -308,24 +306,22 @@ class {%className%} extends Common
 
     public function index()
     {
-
         if (method_exists($this, '_befor_index')) {
             $this->_befor_index($this->m);
         }
-        $this->_search();
-        //var_dump($this->m);exit('x');
+        $where = $this->whereCondition();
+
+        //手工处理自动生成的where条件
         if (method_exists($this, '_filter')) {
             $this->_filter($this->m);
         }
+
+//        $r = $this->cgf->generateListsTemplate();//生成模板
         if (!empty ($this->m)) {
-            $this->_list($this->m);
+            $r = $this->pageList($this->m, $where);
+            return $this->toview($r);
         }
-//        $default_return_format = config('app.default_return_format', 'html');
-//        if (in_array($this->request->module, ["admin", "uer"]) && $default_return_format == 'html') { //only backend need generate template
-//            $r = $this->cgf->generateListsTemplate();//生成模板
-//        }
-        $r = $this->cgf->generateListsTemplate();//生成模板
-        return $this->toview();
+
     }
 
 
@@ -337,8 +333,8 @@ class {%className%} extends Common
 
         $this->generateOptions();
 
-        $id          = input($this->m->getPk());
-        $where       = [];
+        $id = input($this->m->getPk());
+        $where = [];
         $where['id'] = $id;
         if ($this->request->module == 'User') $where['user_id'] = $this->user_id;
         $vo = $this->m->where($where)->find();
@@ -350,7 +346,7 @@ class {%className%} extends Common
         $this->assign('action', 'edit');
 
         $this->pageTitle = $this->getControllerTitle(CONTROLLER_NAME) . "编辑";
-        $this->cgf       = "cgf";
+        $this->cgf = "cgf";
 
         return $this->toview("", "add");
     }
@@ -368,11 +364,11 @@ class {%className%} extends Common
     function save()
     {
         $data = input();
-        if(method_exists($this,"_before_save")){
+        if (method_exists($this, "_before_save")) {
             $this->_before_save($data);
         }
         if ($this->user_id) {
-            $data['user_id']      = $this->user_id;
+            $data['user_id'] = $this->user_id;
         }
 
         $pk = $this->m->getPk();
@@ -383,18 +379,10 @@ class {%className%} extends Common
             //if (empty($rModel)) return $this->error('没有所有者权限');
         }
 
-        //处理上传
-        if (haveUploadFile()) {
-            $uploadInfo = $this->commonUpload();
-            if (!empty($uploadInfo)) {
-                $data = array_merge($data, $uploadInfo);
-            }
-        }
-
         //验证
         if (method_exists($this, '_validateSave')) {
             $rValidate = $this->_validateSave($this->m);
-            if($rValidate !== true){
+            if ($rValidate !== true) {
                 return $this->error($rValidate);
             }
         }
@@ -413,7 +401,7 @@ class {%className%} extends Common
         $id = $this->m->id;
         if (!empty($id)) $this->assign('id', $id);
 
-        if(method_exists($this,"_after_save")){
+        if (method_exists($this, "_after_save")) {
             $this->_after_save($id);
         }
 
@@ -538,7 +526,7 @@ class {%className%} extends Common
             $this->_before_show($param);
         }
 
-        $vo = $this->m->where('user_id',$this->user_id)->find();
+        $vo = $this->m->where('user_id', $this->user_id)->find();
 //        $vo = $this->m->find($id);
         if (empty($vo)) return $this->error('数据不存在');
         $vo = $vo->toArray();
@@ -557,13 +545,13 @@ class {%className%} extends Common
     function infoSave()
     {
         $data = input();
-        if(method_exists($this,"_before_save")){
+        if (method_exists($this, "_before_save")) {
             $this->_before_save($data);
         }
 
         $pk = $this->m->getPk();
         $id = $data[$pk];
-        $rModel = $this->m->where(['user_id'=>$this->user_id])->find(); //, "store_id" => $this->store_id
+        $rModel = $this->m->where(['user_id' => $this->user_id])->find(); //, "store_id" => $this->store_id
 
 
         //处理上传
@@ -577,7 +565,7 @@ class {%className%} extends Common
         //验证
         if (method_exists($this, '_validateSave')) {
             $rValidate = $this->_validateSave($this->m);
-            if($rValidate !== true){
+            if ($rValidate !== true) {
                 return $this->error($rValidate);
             }
         }
@@ -586,15 +574,15 @@ class {%className%} extends Common
         if (empty($rModel)) { //添加
             $data['user_id'] = $this->user_id;
             $r = $this->m->save($data);
-        }else{
-            $r = $rModel->where("user_id",$this->user_id)->save($data); //编辑
+        } else {
+            $r = $rModel->where("user_id", $this->user_id)->save($data); //编辑
         }
         if ($r === false) {
             return $this->error();
         }
         $id = $this->m->id;
         if (!empty($id)) $this->assign('id', $id);
-        if(method_exists($this,"_after_save")){
+        if (method_exists($this, "_after_save")) {
             $this->_after_save($id);
         }
         return $this->toview();
@@ -631,7 +619,7 @@ class {%className%} extends Common
         if (!in_array($filed, $this->allowUpdateFields)) return $this->error('非法类型操作');
 
         $rAuth = $this->verifyOwnerPermission($ids);
-        if($rAuth !== true) return $rAuth; //没有权限提前返回
+        if ($rAuth !== true) return $rAuth; //没有权限提前返回
 
         $r = $this->m->where(['id' => $ids])->update([$filed => $value]);
         if (empty($r)) return $this->error('更新失败');
@@ -640,7 +628,7 @@ class {%className%} extends Common
 
     function upload($stype = 'file')
     {
-        $uploadInfo   = $this->commonUpload($stype);
+        $uploadInfo = $this->commonUpload($stype);
         $this->upload = $uploadInfo;
         //$this->assign("data",$uploadInfo);
         return $this->toview($uploadInfo);
@@ -651,14 +639,14 @@ class {%className%} extends Common
         $imageInfoOfSaved = [];
         $files = request()->file('');
         foreach ($files as $name => $file) {
-            if(empty($moduleDir)) $moduleDir = $name;
+            if (empty($moduleDir)) $moduleDir = $name;
             if (is_array($file)) {
                 foreach ($file as $k => $v) {
-                    $imageInfoOfSaved[$name][] = \think\facade\Filesystem::disk('public')->putFile( $moduleDir, $v);
+                    $imageInfoOfSaved[$name][] = \think\facade\Filesystem::disk('public')->putFile($moduleDir, $v);
                 }
             } else {
                 $imageInfoOfSaved[$name] = \think\facade\Filesystem::disk('public')->putFile($moduleDir, $file);
-                $imageInfoOfSaved[$name."_url"] = img(\think\facade\Filesystem::disk('public')->putFile($moduleDir, $file));
+                $imageInfoOfSaved[$name . "_url"] = img(\think\facade\Filesystem::disk('public')->putFile($moduleDir, $file));
                 //exit('x');
             }
         }
@@ -667,12 +655,13 @@ class {%className%} extends Common
         //return commonUpload($moduleDir);
     }
 
-    function verifyOwnerPermission($id){
+    function verifyOwnerPermission($id)
+    {
         $pk = $this->m->getPk();
         //验证编辑保存权限
-        if($this->request->module == "u"){
+        if ($this->request->module == "u") {
             $condition = array($pk => explode(',', $id), "user_id" => $this->user_id);
-        }elseif($this->request->module == "admin"){
+        } elseif ($this->request->module == "admin") {
             return true;
             //$condition = array($pk => explode(',', $id));
         }
@@ -680,7 +669,7 @@ class {%className%} extends Common
             $rModel = $this->m->where($condition)->find();
             if (!empty($rModel)) {
                 return true;
-            }else{
+            } else {
                 return $this->error('没有所有者权限');
             }
         }
@@ -694,12 +683,12 @@ class {%className%} extends Common
         if (empty ($id)) return $this->error('非法操作');
 
         $rAuth = $this->verifyOwnerPermission($id);
-        if($rAuth !== true) return $rAuth; //没有权限提前返回
+        if ($rAuth !== true) return $rAuth; //没有权限提前返回
 
 //        $rDelete = $this->m->where("id",$id)->delete();
         // 软删除
         $rModel = $this->m->find($id);
-        if(empty($rModel)){
+        if (empty($rModel)) {
             return $this->error('删除失败');
         }
         $rDelete = $rModel->delete();
@@ -721,7 +710,7 @@ class {%className%} extends Common
         if (empty ($id)) return $this->error('非法操作');
 
         $condition = array($pk => explode(',', $id));
-        $rDelete   = $this->m->where($condition)->update(['status' => 0]);
+        $rDelete = $this->m->where($condition)->update(['status' => 0]);
         if (empty($rDelete)) return $this->error('删除失败');
         return $this->toview();
     }
@@ -755,13 +744,7 @@ class {%className%} extends Common
         // 但userBase 验证登录是放在_initialize,导致此类construct 还没执行，就被跳转了
         // 跳转代码获取不到ret_format 导出返回信息仍是html 跳转
         //所以要此代码从construct 移动到此处
-        if (IS_AJAX) {
-            C('ret_format', 'json');
-        } elseif (!empty(input('callback'))) {
-            C('ret_format', 'jsonp');
-        }
 
-        if ($this->enableLog && !IS_CLI) $this->requestLog();
 
         /*//白名单优先
         if(!empty(C('whitelist'))) {
@@ -806,70 +789,6 @@ class {%className%} extends Common
         }*/
 
 
-        $referer = empty($_SERVER['HTTP_REFERER']) ? '/' : $_SERVER['HTTP_REFERER'];
-        C('referer', $referer);
-        $this->platform = $this->getPlatform();
-        //$this->referer = $_SERVER['HTTP_REFERER'];
-
-
-        /*//url带openid 自动写cookie,session等登录标识
-        $open_id = input('open_id');
-        if($open_id){
-            $r =  M('User')->where(["open_id" => $open_id,"type" => input('type')])->find();
-            if(!empty($r)){
-                $r['uid'] = $r['id'];
-                $this->tempStorageOpenidUser = $r;
-                setUserAuth($r); //登录前在getAuth 里增加个标识，如果get open_id有值，不必取cookie,直接标识为登录
-            }
-        }
-
-
-        //exit('x');exit;
-        //用户信息
-        if(!empty($this->uid)){
-            $m = M('User');
-            $r = $m->find($this->uid);
-            //var_dump($r);
-            //echo $m->getLastSql();
-            //exit;
-            if(empty($r['nickname']) && !empty($r['username'])) $r['nickname'] = $r['username'];
-            $this->assign ( 'user', $r );
-        }
-
-        if(C('USER_AUTH_ON')){
-            import ( '@.ORG.Util.RBAC_WEB' );
-            $app = 'USER';
-
-        }else{
-            import ( 'ORG.Util.RBAC' );
-            $app = APP_NAME;
-        }*/
-    }
-
-    function getPlatform()
-    {
-        $platform = input('server.platform');
-        if (empty($platform)) {
-            if (IS_MOBILE) {
-                if (is_weixin()) {
-                    $platform = 'wx';
-                } else {
-                    $platform = 'wap';
-                }
-            } else {
-                $platform = 'pc';
-            }
-        }
-        return $platform;
-    }
-
-    /**
-     * 设置用户id
-     * @param $user_id
-     */
-    protected function setUserId($user_id)
-    {
-        $_REQUEST['uid'] = $_POST['uid'] = $_GET['uid'] = $user_id;//$this->uid;
     }
 
 
@@ -888,7 +807,7 @@ class {%className%} extends Common
 
         //$dbUserInfo['nickname'] =  !empty($dbUserInfo['nickname']) ? $dbUserInfo['nickname'] : ( !empty($dbUserInfo['username']) ? $dbUserInfo['username'] :  '竞拍用户') ;
         //$dbUserInfo['avatar'] = img($dbUserInfo['avatar'],'user_avatar');
-        $this->uid  = $dbUserInfo['id'];
+        $this->uid = $dbUserInfo['id'];
         $this->user = $dbUserInfo;
         $this->assign('uid', $this->uid);
         $this->assign('user', $this->user);
@@ -896,94 +815,8 @@ class {%className%} extends Common
     }
 
 
-    /**
-     * 访问日志，记录用户请求的参数
-     */
-    function requestLog()
-    {
-
-
-        $data        = array();
-        $data['url'] = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-        if (IS_POST) {
-            $params = $_POST;
-        } elseif (IS_GET) {
-            $params = $_GET;
-        }
-        if (empty($params)) $params['input'] = file_get_contents("php://input");
-        $data['params'] = json_encode($params);
-        //$data['cookie'] = json_encode($_COOKIE);
-        //$data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-        $data['ip']        = get_client_ip();
-        $detail            = array();
-        $detail['request'] = $_REQUEST;
-
-        $header = [];
-        $fields = ['HTTP_USER_ID', 'HTTP_DEVICE_VID', 'HTTP_DEVICE_ID', 'HTTP_PLATFORM', 'HTTP_VERSION']; //'HTTP_USER_AGENT',
-        foreach ($fields as $k => $v) {
-            if (empty($_SERVER[$v])) continue;
-            $header[$v] = $_SERVER[$v];
-        }
-        /*$this->version = input('server.HTTP_VERSION');
-        $this->device_id = input('device_id') ?:input('server.HTTP_DEVICE_ID');
-        $this->platform = input('server.HTTP_PLATFORM');
-        $user_id = input('uid') ?: input('server.HTTP_USER_ID');
-        $detail['server'] = $_SERVER;*/
-        //$detail['header'] = $header;
-        //$data['detail'] = json_encode($detail);
-        $url     = $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . " " . $_SERVER['SERVER_PROTOCOL'] . "\r\n";
-        $request = $url . getallheaders(true);
-
-        $raw_post = '';
-        if (IS_POST) {
-            $raw_post = http_build_query($_POST);
-            if (empty($raw_post)) {
-                $raw_post = file_get_contents("php://input");
-            }
-        }
-        $request .= "\r\n" . $raw_post;
-
-        $data['detail']      = $request;
-        $data['user_agent']  = $_SERVER['HTTP_USER_AGENT'];
-        $data['platform']    = input('server.HTTP_PLATFORM');
-        $data['uid']         = cookie('uid');//cookie可能取出null,要求字段必须可为null
-        $data['create_time'] = date("Y-m-d H:i:s");
-        $data['method']      = $_SERVER['REQUEST_METHOD'];
-        $data['date_int']    = time();
-
-
-        try {
-            $m = M('LogRequest', '', C('log_db'));
-            //$m->create($data);
-            $logId = $m->add($data);
-            C('logId', $logId);
-        } catch (\Exception $e) {
-            tplog($e->getMessage());
-        }
-
-
-        //echo $m->getLastSql();exit;
-
-    }
-
-    /**
-     * 记录响应，调用的地方有:\Think\Control->ajaxReturn()
-     * @param $id
-     * @param $response
-     */
-    function responseLog($id, $response)
-    {
-        /* $data = [];
-         $data['id'] = $id;
-         $data['response'] = $response;
-         $m = M('LogRequest','',C('log_db'));
-         $m->save($data);*/
-
-    }
-
     public function lists()
     {
-
         //列表过滤器，生成查询Map对象
         $map = $this->_search();
         if (method_exists($this, '_filter')) {
@@ -1004,7 +837,7 @@ class {%className%} extends Common
 
     protected function _search_array($tableName = '')
     {
-        $map            = [];
+        $map = [];
         $autoIndistinct = true;
         //var_dump($this->controllerName);exit;
 
@@ -1037,41 +870,44 @@ class {%className%} extends Common
      * 处理搜索条件
      * @param array $requestParam
      */
-    protected function _search($requestParam=[])
+    protected function whereCondition($requestParam = [])
     {
-        if(empty($requestParam)) $requestParam = input();
+        if (empty($requestParam)) $requestParam = input();
         //$requestParam['uid'] = $this->request->uid;
-        $front_user_id                  = config("cgf.front_user_id");//$this->front_user_id;
-        $backend_user_id                = config("cgf.backend_user_id");//$this->backend_user_id;
+        $front_user_id = config("cgf.front_user_id");//$this->front_user_id;
+        $backend_user_id = config("cgf.backend_user_id");//$this->backend_user_id;
 
-        if($this->request->module == "u"){ //用户中心默认增加user_id条件
-            $requestParam[$front_user_id]   = $this->request->$front_user_id;
+        if ($this->request->module == "u") { //用户中心默认增加user_id条件
+            $requestParam[$front_user_id] = $this->request->$front_user_id;
         }
-        if(!empty($this->removeUserId)){
+        if (!empty($this->removeUserId)) {
             unset($requestParam[$front_user_id]);
         }
         $requestParam[$backend_user_id] = $this->request->$backend_user_id;
         $autoIndistinct = true;
-        $tableName      = Str::snake($this->controllerName, '_');
+        $tableName = Str::snake($this->controllerName, '_');
         //var_dump($this->m->getFields());exit;
         $fields = Db::name($tableName)->getFields(); //包含字段类型，注释等
+        $where = [];
         foreach ($fields as $column => $definition) {
             $inputValue = $requestParam[$column];
             if ($inputValue !== null && $inputValue != '') {
                 if ($autoIndistinct && $this->columnType($definition['type']) == 'string') {
-                    $this->m = $this->m->where($column, 'like', '%' . $inputValue . '%');
+                    $where[] = [$column, 'like', '%' . $inputValue . '%'];
                 } else {
-                    $this->m = $this->m->where($column, '=', $inputValue);
+                    $where[] = [$column, '=', $inputValue];
                 }
             }
         }
         $this->_option();
+        return $where;
     }
 
     /**
      * 处理select之类的枚举类的选项对应
      */
-    protected function _option(){
+    protected function _option()
+    {
         //var_dump($this->m);exit;
         //配置select选项和选中值
         $options = $this->cgf->getAllColumnOptions();
@@ -1100,246 +936,109 @@ class {%className%} extends Common
      * @param string $sortBy 排序
      * @param bool $asc 是否正序
      */
-    protected function _list($model, $sortBy = '', $asc = false)
+    protected function pageList($model, $where = [], $order = '', $sort = '', $limit = 0)
     {
 
+        //排序字段
+        if (empty($order)) $order = input('_order');
+        if (empty($order)) $order = $model->getPk();
 
-        //排序字段 默认为主键名
-        if (!empty($_REQUEST ['_order'])) {
-            $order = $_REQUEST ['_order'];
-        } else {
-            $order = !empty ($sortBy) ? $sortBy : $model->getPk();
-        }
-        //排序方式默认按照倒序排列
-        //接受 sost参数 0 表示倒序 非0都 表示正序
-        //$setOrder = setOrder(array(array('viewCount', 'a.view_count'), 'a.id'), $orderBy, $orderType, 'a');
-        if (!empty($_REQUEST ['_sort'])) {
-            $sort = $_REQUEST ['_sort'];
-        } else {
-            $sort = $asc ? 'asc' : 'desc';
-        }
-//        $sort = 'desc';
+        //排序方式
+        if (empty($sort)) $sort = input('_order');
+        if (empty($sort)) $sort = 'desc';
 
-        //取得满足条件的记录数
+        if (empty($limit)) $limit = input('_limit');
+        if (empty($limit)) $limit = 10;
 
-        $count = $model->count();
-        if ($count > 0) {
-            //import ( "ORG.Util.Page" );
-            //创建分页对象
-            if (!empty ($_REQUEST ['limit'])) {
-                $listRows = $_REQUEST ['limit'];
-            } elseif (!empty($this->listRows)) {
-                $listRows = $this->listRows;
-            } else {
-                $listRows = '20';
-            }
 
-            if ($this->request->module == 'user') {
-                unset($_GET['uid']);
-            }
-            //========================================== cgf  start =========================================
+        $count = $model->where($where)->count();
+        if ($count <= 0) return [];
 
-            //1.生成查询字段
-            $selectFields = $this->cgf->generateListSelectColumn();
-            //var_dump($selectFields);exit;
-            //if(strpos($order,'`') === false) $order = "`" . $order . "` ";
-            //$r = $model->select();
-            //var_dump($r);exit;
+        //========================================== cgf  start =========================================
 
-            //->field($selectFields)
+        //1.生成查询字段
+        $selectFields = $this->cgf->generateListSelectColumn();
 
-            //关联表预加载
-            $preloadMethod = 'join';
-            if ($model->preloadTable) {
-                foreach ($model->preloadTable as $k => $v) {
-                    if ($preloadMethod == 'join') {
-                        $model = $model->withJoin($v);
-                    } else {
-                        $model->with($v);
-                    }
+
+        //关联表预加载
+        $preloadMethod = 'join';
+        if ($model->preloadTable) {
+            foreach ($model->preloadTable as $k => $v) {
+                if ($preloadMethod == 'join') {
+                    $model = $model->withJoin($v);
+                } else {
+                    $model->with($v);
                 }
             }
-            $voList = $model->order($order . ' ' . $sort)->paginate($listRows, false, ['query' => []]);
+        }
+        $voList = $model->where($where)->field($selectFields)->order($order . ' ' . $sort)->paginate($listRows, false, ['query' => []]);
 
-            //去掉前台不显示的字段，与上面$selectFields功能重复
-            /*if(C('ret_format') == 'json' || C('ret_format') == 'jsonp'){
-                $tableInfo = new TableInfo('list');
-                $tableName = $this->m->getTableName();
-                $fields = $tableInfo->generateHomeListFields($tableName);
-                foreach ($voList as $k => &$v){
-                    foreach ($v as $column => $value){
-                        if(!in_array($column,$fields)) unset($v[$column]);
-                    }
+        //去掉前台不显示的字段，与上面$selectFields功能重复
+        /*if(C('ret_format') == 'json' || C('ret_format') == 'jsonp'){
+            $tableInfo = new TableInfo('list');
+            $tableName = $this->m->getTableName();
+            $fields = $tableInfo->generateHomeListFields($tableName);
+            foreach ($voList as $k => &$v){
+                foreach ($v as $column => $value){
+                    if(!in_array($column,$fields)) unset($v[$column]);
                 }
-            }*/
+            }
+        }*/
 
 
-            //2.当前表有关联的表字段时，取关联表信息并合并。实现join功能
-            $this->cgf->mergeRelatedTableData($voList);
+        //2.当前表有关联的表字段时，取关联表信息并合并。实现join功能
+        $this->cgf->mergeRelatedTableData($voList);
 
-            //3.调用字段显示处理函数
-            $this->cgf->executeColumnCallback($voList);
-
-
-            //与后台管理的list里调用相关显示函数有重复，如|optionValue
-            //if (method_exists ( $this, 'dateToViewModel' ))  $this->dateToViewModel ( $voList );
+        //3.调用字段显示处理函数
+        $this->cgf->executeColumnCallback($voList);
 
 
-            //========================================== cgf  end =========================================
+        //与后台管理的list里调用相关显示函数有重复，如|optionValue
+        //if (method_exists ( $this, 'dateToViewModel' ))  $this->dateToViewModel ( $voList );
 
 
+        //========================================== cgf  end =========================================
 
 
-            //$voList = $voList->toArray();
-            //echo $model->getlastsql();exit('x');
-            //分页跳转的时候保证查询条件
+        //$voList = $voList->toArray();
+        //echo $model->getlastsql();exit('x');
+        //分页跳转的时候保证查询条件
 
-            /* foreach ( $map as $key => $val ) {
-                 if (! is_array ( $val ) && !in_array($key,['_logic'])) {
-                     //$p->parameter .= "$key=" . urlencode ( $val ) . "&";
-                     if(strtolower(MODULE_NAME) == 'user' && $key =='uid'){
-                         continue;
-                     }
-                     //$p->parameter[$key] =  urlencode ( $val );
+        /* foreach ( $map as $key => $val ) {
+             if (! is_array ( $val ) && !in_array($key,['_logic'])) {
+                 //$p->parameter .= "$key=" . urlencode ( $val ) . "&";
+                 if(strtolower(MODULE_NAME) == 'user' && $key =='uid'){
+                     continue;
                  }
-             }*/
-
-            //列表排序相关
-            $sortImg = $sort == 'desc' ? "glyphicon-arrow-down" : "glyphicon-arrow-up"; //排序图标 glyphicon glyphicon-arrow-up
-            if ($sort == 'desc') {
-                $sortImg = 'glyphicon-arrow-down';
-            } elseif ($sort = 'asc') {
-                $sortImg = 'glyphicon-arrow-up';
-            } else {
-                $sortImg = 'glyphicon-sort';
-            }
-
-            $sortAlt = $sort == 'desc' ? '升序排列' : '倒序排列'; //排序提示
-            $sort    = $sort == 'desc' ? 'asc' : 'desc'; //页面上显示的下一次排序方式
-            $this->assign('sort', $sort);
-            $this->assign('sortAlt', $sortAlt);
-            $this->assign('sortImg', $sortImg);
-            $this->assign('order', $order);
-
-            //$this->pageVar = $voList;
-            /*$voList = [];
-            $voList[] = ['id'=>1,'name'=>'a'];
-            $voList[] = ['id'=>2,'name'=>'b'];*/
-
-            // 获取分页显示
-            //$page = $voList->render();
-            //$this->assign('page', $page);
-
-            //$this->assign('list', $voList);
+                 //$p->parameter[$key] =  urlencode ( $val );
+             }
+         }*/
 
 
-
-            //先取分页数据防止_join处理数据，将分页数据丢弃
-            $this->assign('total',$voList->total());
-            $this->assign('per_page',$voList->listRows());
-            $this->assign('current_page',$voList->currentPage());
-            $this->assign('last_page',$voList->lastPage());
-            //会将volist由对象转数组
-            if (method_exists($this, '_join')){
-                $listData = $voList->items();
-                $this->_join($listData);
-                $voList->setItems($listData);
-//                var_dump($voList);
-//                $voList = $listData;
-//                var_dump($listData);
-            }
-
-//exit('xx1');
-            //将导出excel功能注入到此处
-            if ($this->request->action() == 'exportExcel') {
-//                var_dump($voList->getCollection());exit('x');
-
-
-                $this->realExportExcel($voList->getCollection());
-            }
-            //var_dump(is_object($voList));exit('x');
-//var_dump($voList);
-//            var_dump(json_encode($listData));
-            //exit;
-           if(is_object($voList)){
-               $this->assign('data',$voList->getCollection()); //对象列表
-           }elseif(is_array($voList)){
-               $this->assign('data',$voList); //数组列表，由于_join会修改数据，只能用数组才能更改数据
-           }
-
-
-           /* $this->assign('total',$voList['total']);
-            $this->assign('per_page',$voList->per_page);
-            $this->assign('current_page',$voList->current_page);
-            $this->assign('last_page',$voList->last_page);
-            $this->assign('data',$voList->data);*/
-
-
-            //html分页
-            //$page = $voList->render();
-
-
-            //顶部简易分页
-            if ($this->enableLitePage) {
-                $nextIndex = $p->nowPage + 1;
-                if ($nextIndex > $p->totalPages) $nextIndex = $p->totalPages;
-                $nextPageUrl = $p->url($nextIndex);
-                $prevIndex   = $p->nowPage - 1;
-                if ($prevIndex < 1) $prevIndex = 1;
-                $prevPageUrl = $p->url($prevIndex);
-                $this->assign('nextPageUrl', $nextPageUrl);
-                $this->assign('prevPageUrl', $prevPageUrl);
-            }
-        } else {
-            $this->assign('data', []);
+        //先取分页数据防止_join处理数据，将分页数据丢弃
+//            $this->assign('total', $voList->total());
+//            $this->assign('per_page', $voList->listRows());
+//            $this->assign('current_page', $voList->currentPage());
+//            $this->assign('last_page', $voList->lastPage());
+        //会将volist由对象转数组
+        if (method_exists($this, '_join')) {
+            $voList = $this->_join($voList);
         }
-        //cookie( '_currentUrl_', __SELF__ );
-        return;
+
+        //将导出excel功能注入到此处
+        if ($this->request->action() == 'exportExcel') {
+            $this->realExportExcel($voList->getCollection());
+        }
+        return $voList;
     }
 
-    /**
-     * tp6分页模式下，更改数据无效
-     * @param $voList
-     */
-     function _join(&$voList){
-
-         foreach ($voList as $k=>&$v){
-             $v = $v->toArray();
-//             var_dump($v);exit;
-                 $v['create_time'] = date('Y-m-d',strtotime($v['create_time']));
-                 $v['update_time'] = date('Y-m-d',strtotime($v['update_time']));
-                 $v['audit_time'] = date('Y-m-d',strtotime($v['audit_time']));
-                 $v['company_type'] = $v['company_type_text'];
-//                 $v->setAttr('create_time',date('Y-m-d',strtotime($v['create_time'])));
-                 //$v->set('create_time',date('Y-m-d',strtotime($v['create_time'])));
-         }
-     }
 
     function assign($key, $value)
     {
-
         //模板赋值显示
         $this->pageVar[$key] = $value;
-
-        //View::assign($key,$value);
     }
 
-
-    public function clear()
-    {
-        //删除指定记录
-        $name = CONTROLLER_NAME;
-        //$this->m = D ($name);
-        if (!empty ($this->m)) {
-            if (false !== $this->m->where('status=1')->delete()) {
-                $this->assign("jumpUrl", $this->getReturnUrl());
-                $this->success(L('_DELETE_SUCCESS_'));
-            } else {
-                $this->error(L('_DELETE_FAIL_'));
-            }
-        }
-        $this->forward();
-    }
 
     public function forbid()
     {
@@ -1359,13 +1058,13 @@ class {%className%} extends Common
     public function recycleBin()
     {
         $ids = $this->getIds();
-        return $this->switchFieldState($ids,"is_delete",1);
+        return $this->switchFieldState($ids, "is_delete", 1);
     }
 
     function resume()
     {
         $ids = $this->getIds();
-        return $this->switchFieldState($ids,"status",1);
+        return $this->switchFieldState($ids, "status", 1);
     }
 
 
@@ -1380,10 +1079,10 @@ class {%className%} extends Common
             //启动事务
             $this->m->startTrans();
             foreach ($col as $val) {
-                $val           = explode(':', $val);
-                $this->m->id   = $val [0];
+                $val = explode(':', $val);
+                $this->m->id = $val [0];
                 $this->m->sort = $val [1];
-                $result        = $this->m->save();
+                $result = $this->m->save();
                 if (!$result) {
                     break;
                 }
@@ -1403,111 +1102,35 @@ class {%className%} extends Common
     public function toview($data = "", $tpl = "", $msg = '成功')
     {
         if (empty($data)) $data = $this->pageVar;
-        $jsonData              = [];
-        $jsonData['code']      = 0;
-        $jsonData['msg']       = $msg;
-        $returnFormat          = 'json';
-        $default_return_format = config('app.default_return_format', 'html');
-        $isAjax                = $this->request->isAjax();
-        if ($isAjax || input('ret_format') == "json") {
-            $default_return_format = 'json';
-        }
-        //$default_return_format = $this->request->$default_return_format;
-        if ($default_return_format == 'json') {
-
-            $jsonData['data'] = $data;
-            /*if (!empty($data['list'])) {
-                $jsonData['data'] = $data;
-            } else {
-                $jsonData['data'] = $data;
-            }*/
-
-            return json($jsonData);
-        } elseif ($default_return_format == 'jsonp') {
-            $jsonData['data'] = $data;
-            return jsonp($jsonData);
-        } elseif ($default_return_format == 'wap') {
-
-            return view('', $data);
-        } else {
-            //$viewDir = $this->app->getAppPath() . "view/" . $this->request->module . "/";
-            $controllerName = strtolower($this->controllerName);
-            $viewDir = dirname(__DIR__).'/view/';//."/$controllerName/";
-            $tpl = $this->controllerName."/".$this->actionName;
-            View::config(['view_path' => $viewDir]);
-            return view($tpl, $data);
-        }
+        $jsonData = [];
+        $jsonData['code'] = 0;
+        $jsonData['msg'] = $msg;
+        $jsonData['data'] = $data;
+        return json($jsonData);
     }
 
 
-    function JsonError($msg, $code = 0, $data = [])
+    function jsonError($msg, $code = 0, $data = [])
     {
-        $jsonData         = [];
+        $jsonData = [];
         $jsonData['code'] = $code;
-        $jsonData['msg']  = $msg;
+        $jsonData['msg'] = $msg;
+        $jsonData['data'] = $data;
+        return json($jsonData);
 
-        $returnFormat = 'json';
-        if ($returnFormat == 'json') {
-            $jsonData['data'] = $data;
-            return json($jsonData);
-        } elseif ($returnFormat == 'jsonp') {
-            $jsonData['data'] = $data;
-            return jsonp($jsonData);
-        }
     }
 
     function error($msg = '', $code = 1, $jumpUrl = '', $data = [])
     {
-        //var_dump($message);exit;
-        //$ret_format = $this->responseFormat();
-        $default_return_format = config('app.default_return_format');
-        if (in_array($default_return_format, ['json', 'jsonp'])) {
-            $data         = [];
-            $data['code'] = $code;
-            $data['msg']  = $msg;
-            $data['data'] = (object)$data;
-            if ($jumpUrl) $data['jumpUrl'] = $jumpUrl;
 
-            return $this->JsonError($msg, $code, (object)array());
-        }
-        return ['error function'];
-    }
-
-    //用户信息
-    function userinfo()
-    {
-        if (empty($this->uid)) return;
-
-        $u        = M('OutletUser');
-        $userinfo = $u->find($this->uid);
-        unset($userinfo['id']);
-        unset($userinfo['pwd']);
-        unset($userinfo['open_id']);
-        unset($userinfo['bind']);
-        $userinfo       = json_encode($userinfo);
-        $this->userinfo = $userinfo;
+        $data = [];
+        $data['code'] = $code;
+        $data['msg'] = $msg;
+        $data['data'] = (object)$data;
+        return $this->JsonError($msg, $code, (object)array());
 
     }
 
-    //设置标题
-    function setTitle($title)
-    {
-        $this->pageTitle = empty($title) ? C('SITE_TITLE') : $title . '_' . C('SITE_TITLE');
-        //$title && $title = $title."_";
-        //$this->pageTitle = $title.C('SITE_TITLE');
-    }
-
-    //验证码
-    public function createVerifyCode()
-    {
-        $Verify = new \Think\Verify();
-        $Verify->entry();
-    }
-
-    function setParam($key, $value)
-    {
-        $_REQUEST[$key] = $_POST[$key] = $_GET[$key] = $value;
-    }
 
     function exportExcel()
     {
@@ -1533,11 +1156,13 @@ class {%className%} extends Common
         if (empty($_REQUEST['listRows'])) $_REQUEST['listRows'] = 50;
     }
 
-    function isUserModule(){
+    function isUserModule()
+    {
         return $this->request->module == "u";
     }
 
-    function isAdminModule(){
+    function isAdminModule()
+    {
         return $this->request->module == "admin";
     }
 }
