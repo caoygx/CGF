@@ -329,7 +329,6 @@ class SqlToCgfDefinition
         //$arrStr = var_export($this->allModuleDefinition,1);
 
         $filePath = $this->saveDefinitionDir . "/" . str_replace($this->tablePrefix, '', $this->tableName) . ".php";
-
         if (file_exists($filePath)) {
             $lockDefinitionFile = $this->tableInfo['isLockDefinition'];
             if ($lockDefinitionFile) {

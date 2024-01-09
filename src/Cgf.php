@@ -4,7 +4,8 @@ namespace Cgf;
 
 use Cgf\Validate\ThinkphpValidate;
 use Cgf\SqlToCgfDefinition;
-use Cgf\Form\Bootstrap;
+use Cgf\Template\Thinkphp\ThinkphpTemplate;
+use Cgf\Template\VueElement\VueElementTemplate;
 
 
 /**
@@ -18,13 +19,14 @@ class Cgf
 {
 
     public $definition;
-    public $form;
+//    public $form;
 //    public $tableName;
     public $tableFullName;
     public $framework;
     public $tableInfo;
     public $validate;
     public $template;
+    public $showOptionText=true;
 
     /**
      *
@@ -36,7 +38,7 @@ class Cgf
     $cgfConf['form']               = 'bootstrap';
     $cgfConf['currentName']        = 'common';
     $cgfConf['tableName']          = $tableName;
-    $cgfConf['controllerName']     = $this->controllerName;
+    $cgfConf'controllerName']     = $this->controllerName;
     $cgfConf['appRootPath']        = $appBasePath;
     $cgfConf['parentTemplatePath'] = $appBasePath . '/view/public/';
     $cgfConf['templateSavePath']   = $appBasePath . "/view/{$tableName}";
@@ -85,7 +87,7 @@ class Cgf
         $savePath  = $cgfConf['savePath'];
         $framework = $cgfConf['framework'];
         $validate  = $cgfConf['validate'];
-        $form      = $cgfConf['form'];
+        $template      = $cgfConf['template'];
         $tableName = $cgfConf['tableName'];
 
 
@@ -109,7 +111,6 @@ class Cgf
         $tableInfo['isLockDefinition']    = $this->tableInfo->isLockDefinition($tableFullName);
         $tableInfo['tableName']           = $tableName;
 
-
         //生成cgf配置文件
         $d = new SqlToCgfDefinition($tableInfo, $module, $savePath);
 
@@ -123,23 +124,45 @@ class Cgf
         $this->definition = new Definition($tableName, $savePath, $module);
         //var_dump($this->definition->list);
 
-
         if ($framework == 'thinkphp') {
             //$framework = new Think();
             $this->framework = $framework;
-            $this->template  = new \Cgf\Framework\Thinkphp\ThinkphpTemplate($this->definition, $form);
-            $this->validate  = new ThinkphpValidate($this->definition);
+//            $this->validate  = new ThinkphpValidate($this->definition);
 
         } elseif ($framework == 'laravel') {
             //$framework = new laravel();
             $this->framework = $framework;
-            $this->template  = new \Cgf\Framework\Laravel\LaravelTemplate($this->definition, $form);
-            $this->validate  = new LaravelValidate();
+
+//            $this->validate  = new LaravelValidate();
         } else {
             $this->framework = $framework;
-            $this->template  = new \Cgf\Framework\Thinkphp\ThinkphpTemplate($this->definition, $form);
-            $this->validate  = new ThinkphpValidate();
+//            $this->template  = new VueElementTemplate($this->definition, $template);
+//            $this->validate  = new ThinkphpValidate();
         }
+        if ($template == 'vueElement') {
+            $this->template  = new VueElementTemplate($this->definition, 'vueElement');
+        }elseif($template == 'thinkphp'){
+            $this->template  = new ThinkphpTemplate($this->definition, 'thinkphp');
+        }elseif($template == 'laravel'){
+            $this->template  = new LaravelTemplate($this->definition, $template);
+        }elseif($template == 'bootstrap'){
+            $this->template  = new LaravelTemplate($this->definition, $template);
+        }else{
+            $this->template  = new VueElementTemplate($this->definition, 'vueElement');
+        }
+
+        if ($validate == 'vueElement') {
+            $this->validate  = new VueElementTemplate($this->definition, 'vueElement');
+        }elseif($validate == 'thinkphp'){
+            $this->validate  = new ThinkphpTemplate($this->definition, 'thinkphp');
+        }elseif($validate == 'laravel'){
+            $this->validate  = new LaravelTemplate($this->definition, $template);
+        }elseif($validate == 'bootstrap'){
+            $this->validate  = new BootstrapTemplate($this->definition, $template);
+        }else{
+            $this->validate  = new VueElementTemplate($this->definition, 'vueElement');
+        }
+
 
     }
 
@@ -150,6 +173,12 @@ class Cgf
     function setValidate(Validate $validate)
     {
         $this->validate = $validate;
+    }
+
+    function setTemplate($template){
+        if($template == 'vueElement'){
+            $this->template  = new VueElementTemplate($this->definition, 'vueElement');
+        }
     }
 
     /**
@@ -282,8 +311,12 @@ class Cgf
         preg_match($functionReg, $functionDefinition, $out);
         $functionName = $out[1];
         $strParameter = $out[2];
+
+        //处理函数中参数是逗号的问题。如：explode("\,",###) 由于,是参数分隔符，要先将"\,"转成*,等explode处理完后，再把"*"还原成","
+        $strParameter = str_replace('\,',"*",$strParameter); //保留
         $arrParameter = explode(',', $strParameter);
         $arrParameter = array_map(function ($v) {
+            $v = str_replace("*",",",$v); //还原
             return str_replace('"', '', $v);
         }, $arrParameter);
 
@@ -552,51 +585,14 @@ class Cgf
     function executeColumnCallback(&$voList)
     {
 
-        $functionList = $this->generateFieldsFunction();
 
-        //4.处理showText，一般用于枚举类数字转为中文显示
-        $options         = $this->definition->getAllColumnOptions();
-        $allListShowText = $this->definition->getAllListShowText();
         /*$allOptions = [];
         foreach ($allListShowText as $column=>$showText){
             $allOptions[$column]=self::getOptions($this->definition->list[$column]['options']);
         }*/
 //var_dump($options);
         foreach ($voList as $k => &$v) {
-            //等价 $v['trans_state_text'] =$allOptions['trans_state'][$v['trans_state']];
-            foreach ($allListShowText as $column => $showText) {
-                //如果是函数，则执行函数
-                $v[$showText] = $options[$column][$v[$column]];
-            }
-            //执行函数
-            foreach ($functionList as $column => $functionDefinition) {
-
-                $parameter = $functionDefinition['parameter'];
-                //将字段值占位符替换为字段实际的值
-                $index = array_search('###', $parameter);
-                if ($index !== false) {
-                    $parameter[$index] = $v[$column];
-                } else {
-                    array_unshift($parameter, $v[$column]);//无占位符，将字段值设为第一个参数
-                    //$parameter = [$v[$column],$parameter];
-                    $parameter[] = $v; //整行记录放入最后1个参数
-                }
-
-                $index = array_search('@@@', $parameter);
-                if ($index !== false) {
-                    $parameter[$index] = $v[$column];
-                } else {
-                    /*array_unshift($parameter,$v[$column]);//无占位符，将字段值设为第一个参数
-                    $parameter = [$v[$column],$parameter];
-                    $parameter[] = $v; //整行记录放入最后1个参数*/
-                }
-
-                //if(function_exists($functionDefinition['function_name'])){
-                    $v[$column] = call_user_func_array($functionDefinition['function_name'], $parameter);
-                    //var_dump($functionDefinition['function_name'],$parameter,$v[$column]);exit;
-                //}
-
-            }
+            $this->standardizeRow($v);
         }
     }
 
@@ -612,6 +608,61 @@ class Cgf
             $arr[$k] = $v['zh'];
         }
         return $arr;
+    }
+
+    function standardizeRow(&$v){
+        $functionList = $this->generateFieldsFunction();
+        //4.处理showText，一般用于枚举类数字转为中文显示
+        $options         = $this->definition->getAllColumnOptions();
+        $allListShowText = $this->definition->getAllListShowText();
+        //遍历字段
+        //根据字段类型的显示
+        //等价 $v['trans_state_text'] =$allOptions['trans_state'][$v['trans_state']];
+//        var_dump($allListShowText);exit;
+        foreach ($allListShowText as $column => $showText) {
+            //如果是函数，则执行函数
+            $v[$showText] = $options[$column][$v[$column]];
+            if($this->showOptionText){
+                //直接更改带有option字段原始的值,不过这样在后台编辑时，调用show()方法获取编辑的原始内容时也会把数字值转成了文本，
+                //造成编辑保存时，传给后台的也是字符串，而不是数字。
+                //$v[$column] = $options[$column][$v[$column]];
+            }
+        }
+        //执行函数
+        foreach ($functionList as $column => $functionDefinition) {
+
+            $parameter = $functionDefinition['parameter'];
+            //var_dump($parameter);
+            //将字段值占位符替换为字段实际的值
+            $index = array_search('###', $parameter);
+            if ($index !== false) {
+                $parameter[$index] = $v[$column];
+            } else {
+                array_unshift($parameter, $v[$column]);//无占位符，将字段值设为第一个参数
+                //$parameter = [$v[$column],$parameter];
+                $parameter[] = $v; //整行记录放入最后1个参数
+            }
+
+            $index = array_search('@@@', $parameter);
+            if ($index !== false) {
+                $parameter[$index] = $v[$column];
+            } else {
+                /*array_unshift($parameter,$v[$column]);//无占位符，将字段值设为第一个参数
+                $parameter = [$v[$column],$parameter];
+                $parameter[] = $v; //整行记录放入最后1个参数*/
+            }
+
+            //if(function_exists($functionDefinition['function_name'])){
+            //var_dump($functionDefinition['function_name'], $parameter);
+            $v[$column] = call_user_func_array($functionDefinition['function_name'], $parameter);
+            //var_dump($functionDefinition['function_name'],$parameter,$v[$column]);exit;
+            //}
+
+        }
+
+        //var_dump($v);
+        //exit('x');|1111|||explode("\,",###)
+
     }
 
 

@@ -26,8 +26,11 @@ abstract class BaseController
     //use \liliuwei\think\Jump;
 
     public $u_id;
-    public $store_id;
     public $user;
+
+    /**
+     * @var Cgf
+     */
     public $cgf; //静态类会不会更好？
 
     /** @var  Model */
@@ -37,7 +40,7 @@ abstract class BaseController
     public $actionName;
     public $pageVar = [];
     public $autoInstantiateModel = true;
-    public $allowUpdateFields = [];
+    public $allowUpdateFields = ["status"];
     public $modelTemplate = '<?php
 namespace {%namespace%};
 
@@ -99,7 +102,13 @@ class {%className%} extends Common
     {
         $this->app     = $app;
         $this->request = $this->app->request;
-        if($this->request->user_id) $this->user_id = $this->request->user_id;
+        if($this->request->user_id){
+            $this->user_id = $this->request->user_id;
+            $this->user = $this->request->user;
+        }elseif($this->request->admin_id){
+            $this->admin_id = $this->request->admin_id;
+            $this->admin = $this->request->admin;
+        }
 
         // 控制器初始化
         $this->initialize();
@@ -164,7 +173,8 @@ class {%className%} extends Common
 
     }
 
-    function createModelAutomatically($modelName)
+    //旧方法，运行不起来
+    function createModelAutomatically2($modelName)
     {
         $modelDir = $this->getModelDir();
         /*if($this->routeType == "micro_module_class"){
@@ -173,13 +183,33 @@ class {%className%} extends Common
             $className = '\\muser\\model\\';
         }*/
         $className = $modelDir."\\".$modelName;
-
+//var_dump($className);exit;
 
         //if (!class_exists($className)) {
             //$this->makeModelFile('app\\model\\'.$modelName);//exit;
             //Console::call('make:model', ['app\\model\\' . $modelName]);
         //}
         $this->m = app($className);
+        //$this->m = new $className();
+
+    }
+
+    function createModelAutomatically($modelName){
+        $modelDir = '';
+        if(method_exists($this,'getModelDir')){
+            $modelDir = $this->getModelDir();
+        }
+        if(empty($modelDir)){
+            $modelDir = '\\app\\model';
+        }
+        $className = $modelDir."\\".$modelName;
+        if(!class_exists($className)){
+            //$this->makeModelFile('app\\model\\'.$modelName);//exit;
+            Console::call('make:model',['app\\model\\'.$modelName]); //目前只能在app目录下生成model
+        }
+//        var_dump($className);exit('x')
+        $this->m = app($className);
+//        var_dump($this->m);exit;
         //$this->m = new $className();
 
     }
@@ -217,13 +247,12 @@ class {%className%} extends Common
         $arrRoute = explode('/',$route);
         $controllerName = ucfirst($arrRoute[0]);
         $actionName = $arrRoute[1];
-
         //var_dump(Request::isAjax());exit;
         define('CONTROLLER_NAME',$controllerName);
         define('IS_AJAX', Request::isAjax());
         define('IS_GET', Request::isGet());
         define('IS_POST', Request::isPost());
-        define('URL_IMG', '/runtime/storage');
+        define('URL_IMG', '/storage');
         //var_dump(CONTROLLER_NAME);exit;
 
         $this->moduleName     = app('http')->getName();
@@ -246,7 +275,7 @@ class {%className%} extends Common
             //$this->m = Db::name($this->controllerName);
 
             error_reporting(E_ALL ^ E_NOTICE ^ E_DEPRECATED ^ E_STRICT ^ E_WARNING);
-            $appBasePath = __DIR__;
+            $appBasePath = $this->app->getAppPath();
             $dbconfig    = include('../config/database.php');
             $dbconfig    = $dbconfig['connections']['mysql'];
             //dump(Cgf::$config);exit;
@@ -256,8 +285,8 @@ class {%className%} extends Common
             $cgfConf['dbConfig']       = $dbconfig;
             $cgfConf['savePath']       = $appBasePath . "/cgf/definition";//保存cgf生成的定义文件
             $cgfConf['framework']      = 'thinkphp';//使用的框架
-            $cgfConf['validate']       = 'thinkphp';//使用验证库
-            $cgfConf['form']           = 'bootstrap';//表单使用的框架
+            $cgfConf['validate']       = 'vueElement';//使用验证库
+            $cgfConf['template']           = 'vueElement';//表单使用的框架
             $cgfConf['currentName']    = 'common';//当前模块名
             $cgfConf['tableName']      = $tableName;//表名
             $cgfConf['controllerName'] = $this->controllerName;//控制器名
@@ -270,6 +299,7 @@ class {%className%} extends Common
             $cgfConf['autoHiddenPrimaryKey'] = false;//是否将主键表单类型设为hidden
 
             $this->cgf = new Cgf($cgfConf);
+            //$this->cgf->setTemplate('vueElement');
         }
         if (empty($this->allowUpdateFields) && !empty(config('app.allowUpdateFields')[$this->controllerName])) {
             $this->allowUpdateFields = config('app.allowUpdateFields')[$this->controllerName];
@@ -278,17 +308,23 @@ class {%className%} extends Common
 
     public function index()
     {
+
+        if (method_exists($this, '_befor_index')) {
+            $this->_befor_index($this->m);
+        }
         $this->_search();
+        //var_dump($this->m);exit('x');
         if (method_exists($this, '_filter')) {
             $this->_filter($this->m);
         }
         if (!empty ($this->m)) {
             $this->_list($this->m);
         }
-        $default_return_format = config('app.default_return_format', 'html');
-        if (in_array($this->request->module, ["admin", "uer"]) && $default_return_format == 'html') { //only backend need generate template
-            $r = $this->cgf->generateListsTemplate();//生成模板
-        }
+//        $default_return_format = config('app.default_return_format', 'html');
+//        if (in_array($this->request->module, ["admin", "uer"]) && $default_return_format == 'html') { //only backend need generate template
+//            $r = $this->cgf->generateListsTemplate();//生成模板
+//        }
+        $r = $this->cgf->generateListsTemplate();//生成模板
         return $this->toview();
     }
 
@@ -376,6 +412,10 @@ class {%className%} extends Common
 
         $id = $this->m->id;
         if (!empty($id)) $this->assign('id', $id);
+
+        if(method_exists($this,"_after_save")){
+            $this->_after_save($id);
+        }
 
         return $this->toview();
         //return $this->success();
@@ -468,16 +508,95 @@ class {%className%} extends Common
 
     public function show()
     {
-        $id = input('id');
+        $param = input("");
+        if (method_exists($this, '_before_show')) {
+            $this->_before_show($param);
+        }
+
+        $id = $param['id'];
         if (empty($id)) {
             return "参数id不能为空";
         }
-        $vo = $this->m->find($id)->toArray();
+        $vo = $this->m->find($id);
         if (empty($vo)) return $this->error('数据不存在');
+        $vo = $vo->toArray();
+
+        $this->cgf->standardizeRow($vo);
         if (method_exists($this, '_show')) {
             $this->_show($vo);
         }
+
         $this->assign('vo', $vo);
+        return $this->toview();
+    }
+
+    //用户一对一的记录显示
+    public function info()
+    {
+        $param = input("");
+        if (method_exists($this, '_before_show')) {
+            $this->_before_show($param);
+        }
+
+        $vo = $this->m->where('user_id',$this->user_id)->find();
+//        $vo = $this->m->find($id);
+        if (empty($vo)) return $this->error('数据不存在');
+        $vo = $vo->toArray();
+
+        $this->cgf->standardizeRow($vo);
+
+        if (method_exists($this, '_show')) {
+            $this->_show($vo);
+        }
+
+        $this->assign('vo', $vo);
+        return $this->toview();
+    }
+
+    //用户一对一的记录保存
+    function infoSave()
+    {
+        $data = input();
+        if(method_exists($this,"_before_save")){
+            $this->_before_save($data);
+        }
+
+        $pk = $this->m->getPk();
+        $id = $data[$pk];
+        $rModel = $this->m->where(['user_id'=>$this->user_id])->find(); //, "store_id" => $this->store_id
+
+
+        //处理上传
+        if (haveUploadFile()) {
+            $uploadInfo = $this->commonUpload();
+            if (!empty($uploadInfo)) {
+                $data = array_merge($data, $uploadInfo);
+            }
+        }
+
+        //验证
+        if (method_exists($this, '_validateSave')) {
+            $rValidate = $this->_validateSave($this->m);
+            if($rValidate !== true){
+                return $this->error($rValidate);
+            }
+        }
+
+        //保存
+        if (empty($rModel)) { //添加
+            $data['user_id'] = $this->user_id;
+            $r = $this->m->save($data);
+        }else{
+            $r = $rModel->where("user_id",$this->user_id)->save($data); //编辑
+        }
+        if ($r === false) {
+            return $this->error();
+        }
+        $id = $this->m->id;
+        if (!empty($id)) $this->assign('id', $id);
+        if(method_exists($this,"_after_save")){
+            $this->_after_save($id);
+        }
         return $this->toview();
     }
 
@@ -509,9 +628,12 @@ class {%className%} extends Common
      */
     protected function switchFieldState($ids, $filed, $value)
     {
-        if (empty($this->uid)) return $this->error('未登录');
         if (!in_array($filed, $this->allowUpdateFields)) return $this->error('非法类型操作');
-        $r = $this->m->where(['id' => $ids, 'store_id' => $this->store_id])->update([$filed => $value]);
+
+        $rAuth = $this->verifyOwnerPermission($ids);
+        if($rAuth !== true) return $rAuth; //没有权限提前返回
+
+        $r = $this->m->where(['id' => $ids])->update([$filed => $value]);
         if (empty($r)) return $this->error('更新失败');
         return $this->toview();
     }
@@ -520,7 +642,8 @@ class {%className%} extends Common
     {
         $uploadInfo   = $this->commonUpload($stype);
         $this->upload = $uploadInfo;
-        return $this->toview();
+        //$this->assign("data",$uploadInfo);
+        return $this->toview($uploadInfo);
     }
 
     function commonUpload($moduleDir = 'file')
@@ -535,11 +658,32 @@ class {%className%} extends Common
                 }
             } else {
                 $imageInfoOfSaved[$name] = \think\facade\Filesystem::disk('public')->putFile($moduleDir, $file);
+                $imageInfoOfSaved[$name."_url"] = img(\think\facade\Filesystem::disk('public')->putFile($moduleDir, $file));
+                //exit('x');
             }
         }
         return $imageInfoOfSaved;
 
         //return commonUpload($moduleDir);
+    }
+
+    function verifyOwnerPermission($id){
+        $pk = $this->m->getPk();
+        //验证编辑保存权限
+        if($this->request->module == "u"){
+            $condition = array($pk => explode(',', $id), "user_id" => $this->user_id);
+        }elseif($this->request->module == "admin"){
+            return true;
+            //$condition = array($pk => explode(',', $id));
+        }
+        if (!empty($id)) { //编辑保存验证
+            $rModel = $this->m->where($condition)->find();
+            if (!empty($rModel)) {
+                return true;
+            }else{
+                return $this->error('没有所有者权限');
+            }
+        }
     }
 
     public function delete()
@@ -548,17 +692,17 @@ class {%className%} extends Common
         $id = input($pk);
         $id = (string)$id;
         if (empty ($id)) return $this->error('非法操作');
-        $condition = array($pk => explode(',', $id), "store_id" => $this->store_id);
 
-        //验证编辑保存权限
-        if (!empty($id)) { //编辑保存验证
-            $rModel = $this->m->where($condition)->find();
-            if (empty($rModel)) {
-                return $this->error('没有所有者权限');
-            }
+        $rAuth = $this->verifyOwnerPermission($id);
+        if($rAuth !== true) return $rAuth; //没有权限提前返回
+
+//        $rDelete = $this->m->where("id",$id)->delete();
+        // 软删除
+        $rModel = $this->m->find($id);
+        if(empty($rModel)){
+            return $this->error('删除失败');
         }
-
-        $rDelete = $this->m->where($condition)->delete();
+        $rDelete = $rModel->delete();
         if (empty($rDelete)) return $this->error('删除失败');
         return $this->toview();
 
@@ -889,17 +1033,24 @@ class {%className%} extends Common
 
     }
 
-    protected function _search()
+    /**
+     * 处理搜索条件
+     * @param array $requestParam
+     */
+    protected function _search($requestParam=[])
     {
-        $requestParam = input();
+        if(empty($requestParam)) $requestParam = input();
         //$requestParam['uid'] = $this->request->uid;
         $front_user_id                  = config("cgf.front_user_id");//$this->front_user_id;
         $backend_user_id                = config("cgf.backend_user_id");//$this->backend_user_id;
-        $requestParam[$front_user_id]   = $this->request->$front_user_id;
+
+        if($this->request->module == "u"){ //用户中心默认增加user_id条件
+            $requestParam[$front_user_id]   = $this->request->$front_user_id;
+        }
+        if(!empty($this->removeUserId)){
+            unset($requestParam[$front_user_id]);
+        }
         $requestParam[$backend_user_id] = $this->request->$backend_user_id;
-        //$requestParam['store_id']       = $this->request->store_id;
-        //$requestParam['status'] = $this->request->status;
-        //var_dump($requestParam);exit;
         $autoIndistinct = true;
         $tableName      = Str::snake($this->controllerName, '_');
         //var_dump($this->m->getFields());exit;
@@ -914,6 +1065,13 @@ class {%className%} extends Common
                 }
             }
         }
+        $this->_option();
+    }
+
+    /**
+     * 处理select之类的枚举类的选项对应
+     */
+    protected function _option(){
         //var_dump($this->m);exit;
         //配置select选项和选中值
         $options = $this->cgf->getAllColumnOptions();
@@ -960,7 +1118,7 @@ class {%className%} extends Common
         } else {
             $sort = $asc ? 'asc' : 'desc';
         }
-        $sort = 'asc';
+//        $sort = 'desc';
 
         //取得满足条件的记录数
 
@@ -968,8 +1126,8 @@ class {%className%} extends Common
         if ($count > 0) {
             //import ( "ORG.Util.Page" );
             //创建分页对象
-            if (!empty ($_REQUEST ['_listRows'])) {
-                $listRows = $_REQUEST ['_listRows'];
+            if (!empty ($_REQUEST ['limit'])) {
+                $listRows = $_REQUEST ['limit'];
             } elseif (!empty($this->listRows)) {
                 $listRows = $this->listRows;
             } else {
@@ -1030,12 +1188,7 @@ class {%className%} extends Common
             //========================================== cgf  end =========================================
 
 
-            if (method_exists($this, '_join')) $this->_join($voList);
 
-            //将导出excel功能注入到此处
-            if ($this->request->action() == 'exportExcel') {
-                $this->realExportExcel($voList);
-            }
 
             //$voList = $voList->toArray();
             //echo $model->getlastsql();exit('x');
@@ -1074,12 +1227,48 @@ class {%className%} extends Common
             $voList[] = ['id'=>2,'name'=>'b'];*/
 
             // 获取分页显示
-            $page = $voList->render();
-            $this->assign('page', $page);
-            $this->assign('list', $voList);
+            //$page = $voList->render();
+            //$this->assign('page', $page);
+
+            //$this->assign('list', $voList);
 
 
-            /*$this->assign('total',$voList['total']);
+
+            //先取分页数据防止_join处理数据，将分页数据丢弃
+            $this->assign('total',$voList->total());
+            $this->assign('per_page',$voList->listRows());
+            $this->assign('current_page',$voList->currentPage());
+            $this->assign('last_page',$voList->lastPage());
+            //会将volist由对象转数组
+            if (method_exists($this, '_join')){
+                $listData = $voList->items();
+                $this->_join($listData);
+                $voList->setItems($listData);
+//                var_dump($voList);
+//                $voList = $listData;
+//                var_dump($listData);
+            }
+
+//exit('xx1');
+            //将导出excel功能注入到此处
+            if ($this->request->action() == 'exportExcel') {
+//                var_dump($voList->getCollection());exit('x');
+
+
+                $this->realExportExcel($voList->getCollection());
+            }
+            //var_dump(is_object($voList));exit('x');
+//var_dump($voList);
+//            var_dump(json_encode($listData));
+            //exit;
+           if(is_object($voList)){
+               $this->assign('data',$voList->getCollection()); //对象列表
+           }elseif(is_array($voList)){
+               $this->assign('data',$voList); //数组列表，由于_join会修改数据，只能用数组才能更改数据
+           }
+
+
+           /* $this->assign('total',$voList['total']);
             $this->assign('per_page',$voList->per_page);
             $this->assign('current_page',$voList->current_page);
             $this->assign('last_page',$voList->last_page);
@@ -1107,6 +1296,24 @@ class {%className%} extends Common
         //cookie( '_currentUrl_', __SELF__ );
         return;
     }
+
+    /**
+     * tp6分页模式下，更改数据无效
+     * @param $voList
+     */
+     function _join(&$voList){
+
+         foreach ($voList as $k=>&$v){
+             $v = $v->toArray();
+//             var_dump($v);exit;
+                 $v['create_time'] = date('Y-m-d',strtotime($v['create_time']));
+                 $v['update_time'] = date('Y-m-d',strtotime($v['update_time']));
+                 $v['audit_time'] = date('Y-m-d',strtotime($v['audit_time']));
+                 $v['company_type'] = $v['company_type_text'];
+//                 $v->setAttr('create_time',date('Y-m-d',strtotime($v['create_time'])));
+                 //$v->set('create_time',date('Y-m-d',strtotime($v['create_time'])));
+         }
+     }
 
     function assign($key, $value)
     {
@@ -1136,77 +1343,29 @@ class {%className%} extends Common
 
     public function forbid()
     {
-        $name = CONTROLLER_NAME;
-        //$model = D ($name);
-        $pk        = $this->m->getPk();
-        $id        = $_REQUEST [$pk];
-        $condition = array($pk => array('in', $id));
-        $list      = $this->m->forbid($condition);
-        if ($list !== false) {
-            $this->assign("jumpUrl", $this->getReturnUrl());
-            $this->success('状态禁用成功');
-        } else {
-            $this->error('状态禁用失败！');
-        }
+        return $this->disableField("status");
     }
 
-    public function checkPass()
+    public function pass()
     {
-        $name = CONTROLLER_NAME;
-        //$model = D ($name);
-        $pk        = $this->m->getPk();
-        $id        = $_GET [$pk];
-        $condition = array($pk => array('in', $id));
-        if (false !== $this->m->checkPass($condition)) {
-            $this->assign("jumpUrl", $this->getReturnUrl());
-            $this->success('状态批准成功！');
-        } else {
-            $this->error('状态批准失败！');
-        }
+        return $this->enableField("status");
     }
 
     public function recycle()
     {
-        $name = CONTROLLER_NAME;
-        //$model = D ($name);
-        $pk        = $this->m->getPk();
-        $id        = $_GET [$pk];
-        $condition = array($pk => array('in', $id));
-        if (false !== $this->m->recycle($condition)) {
-
-            $this->assign("jumpUrl", $this->getReturnUrl());
-            $this->success('状态还原成功！');
-
-        } else {
-            $this->error('状态还原失败！');
-        }
+        return $this->disableField("is_delete");
     }
 
     public function recycleBin()
     {
-        $map            = $this->_search();
-        $map ['status'] = -1;
-        $name           = CONTROLLER_NAME;
-        //$model = D ($name);
-        if (!empty ($this->m)) {
-            $this->_list($this->m, $map);
-        }
-        $this->display();
+        $ids = $this->getIds();
+        return $this->switchFieldState($ids,"is_delete",1);
     }
 
     function resume()
     {
-        $name = CONTROLLER_NAME;
-        //$model = D ($name);
-        $pk        = $this->m->getPk();
-        $id        = $_GET [$pk];
-        $condition = array($pk => array('in', $id));
-        if (false !== $this->m->resume($condition)) {
-            $this->assign("jumpUrl", $this->getReturnUrl());
-            $this->success('状态恢复成功！');
-        } else {
-            $this->error('状态恢复失败！');
-        }
+        $ids = $this->getIds();
+        return $this->switchFieldState($ids,"status",1);
     }
 
 
@@ -1245,7 +1404,7 @@ class {%className%} extends Common
     {
         if (empty($data)) $data = $this->pageVar;
         $jsonData              = [];
-        $jsonData['code']      = 1;
+        $jsonData['code']      = 0;
         $jsonData['msg']       = $msg;
         $returnFormat          = 'json';
         $default_return_format = config('app.default_return_format', 'html');
@@ -1255,11 +1414,13 @@ class {%className%} extends Common
         }
         //$default_return_format = $this->request->$default_return_format;
         if ($default_return_format == 'json') {
-            if (!empty($data['list'])) {
-                $jsonData['data'] = $data['list'];
+
+            $jsonData['data'] = $data;
+            /*if (!empty($data['list'])) {
+                $jsonData['data'] = $data;
             } else {
                 $jsonData['data'] = $data;
-            }
+            }*/
 
             return json($jsonData);
         } elseif ($default_return_format == 'jsonp') {
@@ -1295,7 +1456,7 @@ class {%className%} extends Common
         }
     }
 
-    function error($msg = '', $code = 0, $jumpUrl = '', $data = [])
+    function error($msg = '', $code = 1, $jumpUrl = '', $data = [])
     {
         //var_dump($message);exit;
         //$ret_format = $this->responseFormat();
@@ -1353,17 +1514,17 @@ class {%className%} extends Common
         return $this->index();
     }
 
-    function realExportExcel($list)
+    function realExportExcel($voList)
     {
         header('Content-type: text/html; charset=utf-8');
-
+//        var_dump($list->getCollection());exit;
         $xlsCell = $this->cgf->getNameAndZh();
         $xlsName = $this->cgf->definition->getTableDefinition()['title'];
-        foreach ($list as $k => $v) {
+        foreach ($voList as $k => $v) {
             //$xlsData[$k]['status'] = 1 ? '正常':'锁定';
             //$xlsData[$k]['addtime'] = date("Y-m-d H:i:s", $v['addtime']);
         }
-        exportExcel($xlsName, $xlsCell, $list);
+        exportExcel($xlsName, $xlsCell, $voList);
     }
 
     function _before_export()
@@ -1372,4 +1533,11 @@ class {%className%} extends Common
         if (empty($_REQUEST['listRows'])) $_REQUEST['listRows'] = 50;
     }
 
+    function isUserModule(){
+        return $this->request->module == "u";
+    }
+
+    function isAdminModule(){
+        return $this->request->module == "admin";
+    }
 }

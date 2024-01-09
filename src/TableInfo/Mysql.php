@@ -30,7 +30,7 @@ class Mysql implements TableInfoInterface
         $dbname=$dbConfig['dbname'];   
         $username=$dbConfig['username'];
         $password=$dbConfig['password'];
-        $dsn="$dbms:host=$host;dbname=$dbname";
+        $dsn="$dbms:host=$host;dbname=$dbname;charset=utf8";
 
         try {
            

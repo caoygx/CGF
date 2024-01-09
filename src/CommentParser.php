@@ -259,7 +259,11 @@ final class CommentParser
                         $items      = explode(",", $options);
                         $options    = [];
                         foreach ($items as $item) {
-                            list($value, $text) = explode(':', $item);
+                            if(strpos($item,':')!==false){
+                                list($value, $text) = explode(':', $item);
+                            }else{
+                                $value = $text = $item;
+                            }
                             $value              = trim($value);
                             $text               = trim($text);
                             $arrOptions[$value] = "$text";
